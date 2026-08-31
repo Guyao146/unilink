@@ -66,17 +66,19 @@ class SecureStore(ctx: Context) {
         null
     }
 
-    private fun decrypt(blob: String): String? = try {
-        val raw = Base64.decode(blob, Base64.NO_WRAP)
-        if (raw.size <= IV_LEN) return null
-        val c = Cipher.getInstance(TRANSFORM)
-        c.init(
-            Cipher.DECRYPT_MODE, secretKey(),
-            GCMParameterSpec(TAG_BITS, raw, 0, IV_LEN)
-        )
-        String(c.doFinal(raw, IV_LEN, raw.size - IV_LEN), Charsets.UTF_8)
-    } catch (t: Throwable) {
-        null
+    private fun decrypt(blob: String): String? {
+        return try {
+            val raw = Base64.decode(blob, Base64.NO_WRAP)
+            if (raw.size <= IV_LEN) return null
+            val c = Cipher.getInstance(TRANSFORM)
+            c.init(
+                Cipher.DECRYPT_MODE, secretKey(),
+                GCMParameterSpec(TAG_BITS, raw, 0, IV_LEN)
+            )
+            String(c.doFinal(raw, IV_LEN, raw.size - IV_LEN), Charsets.UTF_8)
+        } catch (t: Throwable) {
+            null
+        }
     }
 
     /**

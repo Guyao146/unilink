@@ -103,7 +103,7 @@ class MainActivity : Activity() {
         }
         findViewById<Button>(R.id.btnAccess).setOnClickListener {
             try {
-                startActivity(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             } catch (t: Throwable) {
                 Toast.makeText(this, "无法打开设置页，请手动前往", Toast.LENGTH_SHORT).show()
             }
@@ -111,7 +111,7 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btnPerm).setOnClickListener { reqNotifPerm() }
         findViewById<Button>(R.id.btnA11y).setOnClickListener {
             try {
-                startActivity(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                 Toast.makeText(this,
                     "在列表中找到 UniLink → 开启「UniLink 自动回复」",
                     Toast.LENGTH_LONG).show()

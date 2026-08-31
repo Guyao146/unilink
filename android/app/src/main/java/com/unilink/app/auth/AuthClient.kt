@@ -46,8 +46,8 @@ class AuthClient(private val ctx: Context) {
         if (bearer != null) b.header("Authorization", "Bearer $bearer")
         http.newCall(b.build()).execute().use { r ->
             val body = r.body?.string().orEmpty()
-            if (!r.isSuccessful) throw ApiError(describe(r.code, body), r.code)
-            return JSONObject(body)
+            if (!r.isSuccessful) throw ApiError(describe(url, r.code, body), r.code)
+            return parseJson(url, body)
         }
     }
 
@@ -56,8 +56,8 @@ class AuthClient(private val ctx: Context) {
         form.forEach { (k, v) -> fb.add(k, v) }
         http.newCall(Request.Builder().url(url).post(fb.build()).build()).execute().use { r ->
             val body = r.body?.string().orEmpty()
-            if (!r.isSuccessful) throw ApiError(describe(r.code, body), r.code)
-            return JSONObject(body)
+            if (!r.isSuccessful) throw ApiError(describe(url, r.code, body), r.code)
+            return parseJson(url, body)
         }
     }
 
@@ -65,13 +65,32 @@ class AuthClient(private val ctx: Context) {
         val rb = payload.toString().toRequestBody(JSON)
         http.newCall(Request.Builder().url(url).post(rb).build()).execute().use { r ->
             val body = r.body?.string().orEmpty()
-            if (!r.isSuccessful) throw ApiError(describe(r.code, body), r.code)
-            return if (body.isBlank()) JSONObject() else JSONObject(body)
+            if (!r.isSuccessful) throw ApiError(describe(url, r.code, body), r.code)
+            return if (body.isBlank()) JSONObject() else parseJson(url, body)
         }
     }
 
-    /** 把服务端的 error_description / detail 提取成人话，便于在 App 日志里定位问题 */
-    private fun describe(code: Int, body: String): String {
+    /**
+     * 解析 JSON。HTTP 200 但内容不是 JSON 的情况很常见 ——
+     * 典型是地址写错、打到了别的服务（返回 HTML 首页）或代理的错误页。
+     * 这时给出"不是 JSON"的明确提示，比抛一个裸 JSONException 有用得多。
+     */
+    private fun parseJson(url: String, body: String): JSONObject = try {
+        JSONObject(body)
+    } catch (t: Throwable) {
+        throw ApiError(
+            "${shortUrl(url)} 返回的不是 JSON —— 请确认地址指向 UniLink 扫码服务" +
+                    "（而不是 authentik 或其它站点）", 0)
+    }
+
+    /**
+     * 把服务端返回的错误提炼成可定位的信息。
+     *
+     * 500 之类的错误往往由反向代理或 authentik 返回、响应体是 HTML 而非 JSON，
+     * 此时必须带上**请求的 URL 与响应体片段**，否则日志里只剩一句 "HTTP 500"，
+     * 根本分不清是打错了地址、代理没通、还是服务端真的崩了。
+     */
+    private fun describe(url: String, code: Int, body: String): String {
         val msg = try {
             val o = JSONObject(body)
             o.optString("error_description")
@@ -80,19 +99,42 @@ class AuthClient(private val ctx: Context) {
         } catch (_: Throwable) {
             ""
         }
-        return if (msg.isBlank()) "HTTP $code" else "$msg (HTTP $code)"
+        if (msg.isNotBlank()) return "$msg (HTTP $code)"
+
+        // 非 JSON 响应：截一段正文，去掉标签与空白，便于识别是谁在应答
+        val snippet = body.replace(Regex("<[^>]*>"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .take(120)
+        val where = shortUrl(url)
+        return if (snippet.isBlank()) "HTTP $code（$where 无响应内容）"
+               else "HTTP $code（$where）：$snippet"
     }
+
+    /** 只保留 host + path，避免把查询串里的敏感参数写进日志 */
+    private fun shortUrl(url: String): String =
+        url.substringBefore('?').removePrefix("https://").removePrefix("http://")
 
     // ================= 配置发现 =================
 
     fun fetchEndpoints(qrServer: String): Endpoints {
         val o = getJson("${qrServer.trimEnd('/')}/api/app/config")
+        // 缺字段说明打到的不是本服务（或版本不匹配）—— 明确报出来，
+        // 而不是抛一个只写着字段名的 JSONException
+        fun need(k: String): String {
+            val v = o.optString(k)
+            if (v.isBlank()) {
+                throw ApiError("${shortUrl(qrServer)} 的响应缺少 $k 字段，" +
+                        "该地址可能不是 UniLink 扫码服务", 0)
+            }
+            return v
+        }
         return Endpoints(
-            authorizeUrl = o.getString("authorize_url"),
-            tokenUrl = o.getString("token_url"),
-            userinfoUrl = o.getString("userinfo_url"),
-            clientId = o.getString("client_id"),
-            redirectUri = o.getString("redirect_uri"),
+            authorizeUrl = need("authorize_url"),
+            tokenUrl = need("token_url"),
+            userinfoUrl = need("userinfo_url"),
+            clientId = need("client_id"),
+            redirectUri = need("redirect_uri"),
             scopes = o.optString("scopes", "openid profile email offline_access")
         )
     }

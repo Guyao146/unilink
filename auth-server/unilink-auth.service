@@ -1,0 +1,44 @@
+[Unit]
+Description=UniLink 扫码登录服务（OIDC Provider）
+Documentation=https://github.com/Guyao146/unilink/blob/main/docs/QR-LOGIN.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=unilink
+Group=unilink
+WorkingDirectory=/opt/unilink/auth-server
+ExecStart=/opt/unilink/auth-server/.venv/bin/python app.py
+Restart=on-failure
+RestartSec=5
+
+# 只监听环回地址，必须经反向代理暴露
+Environment=UNILINK_HOST=127.0.0.1
+Environment=UNILINK_PORT=8790
+# 其余配置从 EnvironmentFile 读取（含密钥，权限设为 0600）
+EnvironmentFile=/opt/unilink/auth-server/.env
+
+# ---- 加固：本服务只需读代码、写 keys/ 与出网访问 authentik ----
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+# 唯一需要写入的目录：RSA 签名私钥
+ReadWritePaths=/opt/unilink/auth-server/keys
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=unilink-auth
+
+[Install]
+WantedBy=multi-user.target

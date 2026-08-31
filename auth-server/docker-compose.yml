@@ -1,0 +1,45 @@
+# UniLink 扫码登录服务
+#
+# 用法:
+#   1. cp .env.example .env  并填写（至少要改 UNILINK_CLIENT_SECRET）
+#   2. docker compose up -d
+#   3. docker compose logs -f
+#
+# 服务只绑在 127.0.0.1:8790，必须经由宿主机的 nginx/Caddy 反代出去 ——
+# 直接暴露到公网会让授权码与 authentik 令牌以明文传输。
+
+services:
+  auth-server:
+    build: .
+    image: unilink-auth:latest
+    container_name: unilink-auth
+    restart: unless-stopped
+
+    # 只监听环回地址，杜绝绕过反代直连
+    ports:
+      - "127.0.0.1:8790:8790"
+
+    env_file: .env
+
+    environment:
+      # 下游客户端（即 authentik 的 OAuth Source）。用环境变量传入，
+      # 免去在容器里维护 config.json 的麻烦。
+      UNILINK_CLIENTS: >-
+        [{"name":"authentik",
+          "client_id":"${UNILINK_CLIENT_ID:-unilink-qr}",
+          "client_secret":"${UNILINK_CLIENT_SECRET}",
+          "redirect_uris":["${UNILINK_AUTHENTIK_URL}/source/oauth/callback/${UNILINK_CLIENT_ID:-unilink-qr}/"]}]
+
+    volumes:
+      # RSA 签名私钥必须持久化：丢了等于换发卡机构，
+      # authentik 缓存的公钥会验签失败
+      - ./keys:/app/keys
+
+    # authentik 若也在 docker 里，加入同一网络可走容器名直连，
+    # 免去出公网绕一圈。按需取消注释并改成你的网络名。
+    # networks:
+    #   - authentik_default
+
+# networks:
+#   authentik_default:
+#     external: true

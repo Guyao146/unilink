@@ -29,50 +29,155 @@ userinfo，令牌被吊销立刻失效。签发的 `sub` 直接沿用 authentik 
 
 ## 一、部署 auth-server
 
+以下三种方式任选其一。**推荐 Docker**（与 authentik 部署方式一致，升级回滚都简单）。
+
+无论哪种方式，都要先准备一个客户端密钥：
+
 ```bash
+python3 -c "import secrets;print(secrets.token_urlsafe(48))"
+```
+
+记下这串，第二步在 authentik 里要填同一个值。
+
+---
+
+### 方式 A：Docker Compose（推荐）
+
+```bash
+# 1. 拉代码
+cd /opt
+git clone https://github.com/Guyao146/unilink.git
 cd unilink/auth-server
-pip install -r requirements.txt
+
+# 2. 配置
+cp .env.example .env
+vi .env          # 填 UNILINK_CLIENT_SECRET，核对两个 URL
+
+# 3. 启动
+docker compose up -d --build
+docker compose logs -f
+```
+
+看到这几行就说明起来了：
+
+```
+UniLink 扫码登录服务已启动
+  issuer            : https://gateway.mcylyr.cn
+  authentik         : https://login.mcylyr.cn
+  已注册客户端      : unilink-qr
+  签名 kid          : xxxxxxxx
+```
+
+本机自检：
+
+```bash
+curl -i http://127.0.0.1:8790/healthz
+# 预期 200 {"ok": true, "sessions": 0, "codes": 0, "tokens": 0}
+```
+
+> 容器只绑 `127.0.0.1:8790`，不会直接暴露到公网 —— 必须经第 1.5 步的反代出去。
+> `keys/` 挂成了宿主目录，RSA 签名私钥不会随容器重建而丢失。
+
+**authentik 也在 Docker 里？** 把 compose 文件末尾的 `networks` 段取消注释，
+改成 authentik 的网络名（`docker network ls` 查），然后 `.env` 里的
+`UNILINK_AUTHENTIK_URL` 可以改用容器名如 `http://authentik-server:9000`，
+省掉出公网绕一圈。注意此时 `UNILINK_BASE_URL` 仍必须是对外的 https 地址。
+
+---
+
+### 方式 B：systemd（不想用 Docker）
+
+```bash
+# 1. 代码与虚拟环境
+cd /opt
+git clone https://github.com/Guyao146/unilink.git
+cd unilink/auth-server
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# 2. 专用系统用户（不给登录 shell）
+useradd --system --no-create-home --shell /usr/sbin/nologin unilink
+
+# 3. 配置文件，权限收紧到 0600（里面有客户端密钥）
+cp .env.example .env
+vi .env
+chmod 600 .env
+mkdir -p keys
+chown -R unilink:unilink /opt/unilink/auth-server
+
+# 4. 注册服务
+cp unilink-auth.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now unilink-auth
+systemctl status unilink-auth
+journalctl -u unilink-auth -f
+```
+
+自检同上：`curl -i http://127.0.0.1:8790/healthz`
+
+---
+
+### 方式 C：先手动跑一遍（只为验证配置）
+
+```bash
+cd /opt/unilink/auth-server
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp config.example.json config.json
+vi config.json                    # 填 4 个值，见下表
+.venv/bin/python app.py
 ```
 
-生成一个客户端密钥：
+`config.json` 必填项：
 
-```bash
-python -c "import secrets;print(secrets.token_urlsafe(48))"
-```
+| 字段 | 值 |
+|------|-----|
+| `base_url` | `https://gateway.mcylyr.cn` — 本服务对外地址，**必须 https** |
+| `authentik_url` | `https://login.mcylyr.cn` — authentik 根地址 |
+| `clients[0].client_secret` | 上面生成的随机串 |
+| `clients[0].redirect_uris` | `https://login.mcylyr.cn/source/oauth/callback/unilink-qr/` |
 
-编辑 `config.json`：
+配置有误时它会打印 `[配置错误] ...` 并退出，照提示改即可。
+这种方式关掉终端服务就停了，验证完请转 A 或 B。
 
-| 字段 | 说明 |
-|------|------|
-| `base_url` | 本服务对外地址，**必须 https**，如 `https://qr.example.com` |
-| `authentik_url` | authentik 根地址，如 `https://auth.example.com` |
-| `clients[0].client_secret` | 填上一步生成的随机串 |
-| `clients[0].redirect_uris` | `https://auth.example.com/source/oauth/callback/unilink-qr/`（`unilink-qr` 为第二步里 Source 的 slug） |
-| `allowed_groups` | 可选。限制只有某些 authentik 组能扫码登录 |
+## 一点五、反向代理
 
-启动：
+auth-server 只听 `127.0.0.1:8790`，需要 nginx 把子域转进来。
+完整可用的配置见 **`auth-server/nginx.conf.example`**，核心是：
 
-```bash
-python app.py
-```
+```nginx
+server {
+    listen 443 ssl;              # ← ssl 关键字漏了就会 TLS 握手失败
+    server_name gateway.mcylyr.cn;
 
-首次启动会在 `keys/oidc-rsa.pem` 生成签名私钥（权限 0600）。**这个文件不要删也不要提交**
-—— 删了等于换发卡机构，authentik 缓存的公钥会验签失败。
+    ssl_certificate     /etc/letsencrypt/live/mcylyr.cn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mcylyr.cn/privkey.pem;
 
-反代示例（Caddy 一行）：
-
-```
-qr.example.com {
-    reverse_proxy 127.0.0.1:8790
+    location / {
+        proxy_pass http://127.0.0.1:8790;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 }
 ```
 
-> ⚠️ 必须走 https。授权码与 authentik 令牌都经过这条链路，明文 http 下
-> 同网段的人可以直接抓到令牌冒充你登录任何项目。App 端也会拒绝把令牌
-> 发往公网 http 地址。
+`nginx -t && nginx -s reload` 后从**外部**验证：
 
-验证：`curl https://qr.example.com/.well-known/openid-configuration`
+```bash
+curl -i https://gateway.mcylyr.cn/api/app/config
+```
+
+预期 200 + 含 `authorize_url`、`client_id` 的 JSON。对照排查：
+
+| 现象 | 原因 |
+|------|------|
+| TLS 握手失败 / `SEC_E_INVALID_TOKEN` | `listen 443` 漏了 `ssl`，或该 vhost 没配证书 |
+| 502 | auth-server 没起来（回去看 `docker compose logs` / `journalctl`） |
+| 404 且无 `X-Powered-By` | 落到了 nginx 默认 server，`server_name` 没匹配上 |
+| 响应头有 `X-Powered-By: authentik` | 请求打到了 authentik —— 域名或 proxy_pass 配错了 |
+
+> Caddy 用户更省事，一行足够：
+> `gateway.mcylyr.cn { reverse_proxy 127.0.0.1:8790 }`
 
 ## 二、在 authentik 里加为登录源
 

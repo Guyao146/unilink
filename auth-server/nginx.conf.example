@@ -1,0 +1,54 @@
+# UniLink 扫码登录服务 —— nginx 反向代理配置示例
+#
+# 放到 /etc/nginx/conf.d/gateway.conf（或 sites-available 并做软链），
+# 把 gateway.mcylyr.cn 换成你自己的子域，改完执行：
+#     nginx -t && nginx -s reload
+#
+# ⚠️ 最常踩的坑：listen 443 后面漏写 ssl 关键字。
+#    那样 nginx 会在 443 上讲明文 HTTP，客户端 TLS 握手直接失败
+#    （curl 报 SEC_E_INVALID_TOKEN / wrong version number）。
+
+server {
+    listen      443 ssl;
+    http2       on;
+    server_name gateway.mcylyr.cn;
+
+    # 通配证书可与 authentik 共用同一份，无需另外申请。
+    # 路径按实际情况改（certbot 默认在 /etc/letsencrypt/live/<域名>/）
+    ssl_certificate     /etc/letsencrypt/live/mcylyr.cn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mcylyr.cn/privkey.pem;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # 扫码页面与授权码都不该被缓存
+    add_header Cache-Control "no-store" always;
+    # 二维码页面不需要被别人嵌进 iframe
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:8790;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        # auth-server 取 X-Forwarded-For 的第一跳记录扫码来源 IP
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # 浏览器每 1.5 秒轮询一次会话状态，保持连接复用
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout    30s;
+    }
+}
+
+# http 一律跳 https —— App 会拒绝把 authentik 令牌发往公网 http
+server {
+    listen      80;
+    server_name gateway.mcylyr.cn;
+    return 301 https://$host$request_uri;
+}

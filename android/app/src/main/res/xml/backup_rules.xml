@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  备份排除规则（Android 11 及以下走 fullBackupContent）
+
+  把认证相关的 SharedPreferences 排除在云备份之外：
+   1. 令牌是用 Android Keystore 里的硬件密钥加密的，该密钥不参与备份，
+      备份出去的密文在新设备上根本解不开 —— 留着只是无用的敏感数据；
+   2. 减少凭据的暴露面，避免加密令牌落到 Google 云端。
+  被排除后换机需重新登录一次，这是刻意的取舍。
+-->
+<full-backup-content>
+    <exclude
+        domain="sharedpref"
+        path="unilink_auth.xml" />
+</full-backup-content>

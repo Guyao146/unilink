@@ -1,0 +1,54 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.unilink.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.unilink.app"
+        minSdk 24          // Android 7.0+
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+
+    testOptions {
+        // 本地单元测试里 android.jar 的方法默认抛异常；返回默认值更适合纯逻辑测试。
+        // 注意 org.json 的真实实现由 testImplementation 提供，会覆盖 android.jar 的桩。
+        unitTests.returnDefaultValues = true
+    }
+}
+
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // 扫码登录所需（版本锁定，勿用开放区间）
+    //   zxing-android-embedded 提供现成的扫码 Activity（Apache-2.0，minSdk 24 起可用）
+    //   appcompat 是它的传递依赖，这里显式声明以固定版本
+    //   browser 提供 Custom Tabs —— 按 RFC 8252 用外部浏览器完成 OIDC 登录
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.browser:browser:1.7.0'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+
+    // 单元测试（JVM 本地运行，不需要设备）
+    //   android.jar 里的 org.json 是只抛异常的桩实现，
+    //   本地测试必须显式引入真实实现，否则 QrTicket 的解析测试跑不起来
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20231013'
+}

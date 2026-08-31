@@ -1,0 +1,32 @@
+{
+  "_说明": "复制本文件为 config.json 后按注释填写。带 ← 的行必须改。",
+
+  "base_url": "https://qr.example.com",
+  "authentik_url": "https://auth.example.com",
+
+  "host": "127.0.0.1",
+  "port": 8790,
+
+  "clients": [
+    {
+      "name": "authentik",
+      "client_id": "unilink-qr",
+      "client_secret": "请用 python -c \"import secrets;print(secrets.token_urlsafe(48))\" 生成并替换",
+      "redirect_uris": [
+        "https://auth.example.com/source/oauth/callback/unilink-qr/"
+      ]
+    }
+  ],
+
+  "app_client_id": "unilink-mobile",
+  "app_redirect_uri": "unilink://auth/callback",
+
+  "login_ttl": 180,
+  "code_ttl": 60,
+  "max_sessions": 500,
+
+  "app_scopes": "openid profile email offline_access",
+
+  "allowed_subs": [],
+  "allowed_groups": []
+}

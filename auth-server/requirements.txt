@@ -1,0 +1,11 @@
+aiohttp>=3.9.0
+cryptography>=42.0.0
+qrcode>=7.4.2
+
+# 说明：
+#   aiohttp      —— HTTP 服务框架（OIDC 端点 + 扫码页面 + App API）
+#   cryptography —— RSA 签名密钥生成与 ID Token 的 RS256 签名
+#   qrcode       —— 生成二维码（用 SVG 输出，无需 Pillow）
+#
+# 本服务与 server/server.py（WebSocket 中继）互相独立，可分开部署；
+# 若同机部署，建议用不同端口并各自反代为 https/wss。

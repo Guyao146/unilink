@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.UniLink" parent="android:Theme.Material.Light.DarkActionBar" />
+
+    <!--
+      登录 / 扫码用的透明主题。
+      这两个 Activity 本身不显示界面（只负责跳浏览器、开扫码器、弹确认框），
+      因此做成全透明，视觉上像是从主界面直接弹出的对话框。
+      刻意继承平台主题而非 AppCompat —— 两个 Activity 都是纯 android.app.Activity，
+      与项目其余部分保持一致，不引入 AppCompat 主题属性的依赖。
+    -->
+    <style name="Theme.UniLink.Invisible" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+</resources>

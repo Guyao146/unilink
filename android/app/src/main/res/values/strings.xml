@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UniLink 互联助手</string>
+    <string name="a11y_label">UniLink 自动回复</string>
+    <string name="a11y_desc">用于“在电脑上回复手机通知”：自动定位目标通知、填写回复内容并发送。UniLink 不会读取或上传屏幕上其它内容。</string>
+
+    <!-- 扫码登录 -->
+    <string name="login_none">未登录 —— 登录后可用手机扫码登录所有接入 authentik 的项目</string>
+    <string name="scan_prompt">对准电脑屏幕上的登录二维码</string>
+</resources>

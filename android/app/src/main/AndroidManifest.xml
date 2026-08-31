@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- 扫码登录：读取电脑屏幕上的登录二维码 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <!--
+      Android 11+ 的包可见性限制：查询系统是否有可处理 https 的浏览器，
+      以便按 RFC 8252 用外部浏览器完成 OIDC 登录（Custom Tabs 亦依赖此项）。
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.UniLink">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 前台服务：维持 WebSocket 长连接 -->
+        <service
+            android:name=".LinkService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- 通知监听：读取状态栏所有通知（需用户在系统设置中授权） -->
+        <service
+            android:name=".NotifCaptureService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- 无障碍服务：电脑回复手机通知时自动填写并发送 -->
+        <service
+            android:name=".ReplyAccessibilityService"
+            android:exported="true"
+            android:label="@string/a11y_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/a11y_config" />
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+        </service>
+
+        <!--
+          authentik 登录：跳系统浏览器完成 OIDC + PKCE，再由自定义 scheme 回跳。
+          singleTask 保证回跳时复用同一实例，从而能拿到内存里的 PKCE verifier。
+          exported=true 是 scheme 回跳的必要条件；但本 Activity 只接受
+          带 code/state 的回调，且 state 必须与本次请求匹配，恶意应用无法伪造登录。
+        -->
+        <activity
+            android:name=".auth.LoginActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.UniLink.Invisible">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="unilink"
+                    android:host="auth" />
+            </intent-filter>
+        </activity>
+
+        <!-- 扫码登录：开相机读二维码 → 弹确认框 → 授权 -->
+        <activity
+            android:name=".auth.ScanLoginActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.UniLink.Invisible" />
+
+        <!-- zxing 扫码界面：竖屏锁定，避免旋转时相机重建导致闪退。
+             不覆盖它自带的主题 —— 相机预览需要不透明窗口。 -->
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true"
+            tools:replace="android:screenOrientation" />
+
+    </application>
+</manifest>

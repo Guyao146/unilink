@@ -1,0 +1,35 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# PC 端本地配置（含房间码/访问令牌，切勿提交！）
+pc-client/config.json
+
+# 扫码登录服务的本地配置与签名私钥（切勿提交！）
+auth-server/config.json
+auth-server/keys/
+
+# ===== Android 构建产物 =====
+**/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/.idea/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# ===== 系统与运行时 =====
+Thumbs.db
+.DS_Store
+*.log

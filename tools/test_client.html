@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>UniLink Web 测试客户端</title>
+<style>
+  body{font-family:system-ui,"Microsoft YaHei";max-width:780px;margin:24px auto;padding:0 12px;color:#222}
+  input,button{padding:6px 8px;margin:2px;border-radius:6px;border:1px solid #bbb}
+  button{cursor:pointer;background:#2d6cdf;color:#fff;border:none}
+  #log{white-space:pre-wrap;background:#101418;color:#9fe8b4;border-radius:8px;
+       padding:12px;height:340px;overflow:auto;font-size:13px;font-family:Consolas,monospace}
+  h2{margin-bottom:4px}
+</style>
+</head>
+<body>
+<h2>UniLink Web 测试客户端</h2>
+<p>浏览器无法参与端到端加密，将以<b>明文模式</b>加入房间（房间内其它设备会自动降级为明文）。仅用于联调测试。</p>
+<div>
+  <input id="url" size="34" placeholder="ws://192.168.1.100:8765/ws">
+  <input id="room" size="10" placeholder="房间码">
+  <input id="name" size="10" placeholder="昵称">
+  <button onclick="conn()">连接</button>
+  <button onclick="disc()">断开</button>
+</div>
+<div>
+  <input id="msg" size="56" placeholder="输入消息，回车发送">
+  <button onclick="send()">发送</button>
+</div>
+<div id="log"></div>
+
+<script>
+let ws = null;
+
+function log(s){
+  const d = document.getElementById('log');
+  d.textContent += s + "\n";
+  d.scrollTop = d.scrollHeight;
+}
+
+function conn(){
+  if (ws) ws.close();
+  const u = document.getElementById('url').value.trim() ||
+        location.protocol.replace('http','ws') + '//' + location.host + '/ws';
+  ws = new WebSocket(u);
+  ws.onopen = () => {
+    log('[已连接] ' + u);
+    ws.send(JSON.stringify({
+      type:'hello', room: document.getElementById('room').value.trim() || 'test1234',
+      token:'', name: document.getElementById('name').value.trim() || 'Web',
+      platform:'web', crypto_cap:false }));
+  };
+  ws.onmessage = e => {
+    let m; try { m = JSON.parse(e.data); } catch(_) { return; }
+    if (m.type === 'msg') {
+      let p = m.enc ? {note:'(加密消息，Web端无法解密)'} : m.payload;
+      const who = m.from && m.from.name ? m.from.name : '?';
+      log(`[${m.kind}] ${who}: ` + JSON.stringify(p).slice(0,400));
+    } else {
+      log('[' + m.type + '] ' + JSON.stringify(m).slice(0,300));
+    }
+  };
+  ws.onclose = () => log('[连接已关闭]');
+  ws.onerror = () => log('[连接错误]');
+}
+
+function disc(){ if (ws) ws.close(); }
+
+function send(){
+  const t = document.getElementById('msg').value.trim();
+  if (!t || !ws) return;
+  ws.send(JSON.stringify({
+    type:'msg', id: Math.random().toString(36).slice(2,10), ts: Date.now(),
+    from:{ id:'web', name: document.getElementById('name').value.trim() || 'Web',
+           platform:'web' },
+    to:'all', kind:'text', enc:false, payload:{text:t}
+  }));
+  document.getElementById('msg').value = '';
+}
+
+document.getElementById('msg').addEventListener('keydown',
+  e => { if (e.key === 'Enter') send(); });
+</script>
+</body>
+</html>

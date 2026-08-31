@@ -1,0 +1,19 @@
+websockets>=10.0
+cryptography>=3.4
+plyer>=2.1
+
+# ─────────────────────────────────────────────────────────────
+# 可选功能：把电脑自身的系统通知转发给手机（Windows 专用）
+# 不安装不影响其它任何功能，PC 端会自动降级并在日志中提示。
+#
+# winsdk 只有 beta 版本，且官方预编译轮子仅覆盖 Python 3.7 ~ 3.11：
+#   pip install winsdk==1.0.0b10
+#
+# Python 3.12+ 用户请改用微软新版官方投影（本代码两种都兼容）：
+#   pip install winrt-runtime winrt-Windows.Foundation ^
+#               winrt-Windows.UI.Notifications winrt-Windows.UI.Notifications.Management ^
+#               winrt-Windows.Data.Xml.Dom
+#
+# 说明：桌面右下角的「系统 Toast 弹窗」复用上面任一依赖，无需额外安装；
+#       首次弹出时会自动在开始菜单创建带 AUMID 的 UniLink.lnk（仅一次）。
+# ─────────────────────────────────────────────────────────────

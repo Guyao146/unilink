@@ -22,6 +22,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # runner 自带的 Gradle 会随镜像滚动升级（已到 9.x），与 AGP 8.2.2 不兼容
+      #（表现为 "Cannot mutate the dependencies of configuration ... after resolved"）。
+      # 这里把 Gradle 钉在与 AGP 匹配的版本上，构建结果才可复现。
+      # 升级 AGP 时记得同步调整这里，对应关系见：
+      #   https://developer.android.com/build/releases/gradle-plugin
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
       - name: Run unit tests
         working-directory: android
         run: |
@@ -37,9 +47,7 @@ jobs:
 
       - name: Build Debug APK
         working-directory: android
-        run: |
-          # ubuntu-latest 自带 Gradle 8.x 与 Android SDK（已预授权许可证）
-          gradle assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -54,6 +62,11 @@ jobs:
 #   2. 仓库页 → Actions → Build Android APK → Run workflow
 #   3. 构建完成后在该次运行页面底部 Artifacts 下载 UniLink-debug-apk.zip，
 #      解压得到 app-debug.apk，传到手机安装即可
+#
+# 关于 Gradle 版本：本流水线显式安装 Gradle 8.7 而不用 runner 自带的版本。
+# runner 镜像里的 Gradle 会随时间升到 9.x，而 AGP 8.2.2 不支持 Gradle 9
+#（会报 "Cannot mutate the dependencies of configuration ... after resolved"）。
+# 显式指定版本可保证构建可复现，不会某天因为镜像更新而突然失败。
 #
 # 如需正式签名版：在仓库 Secrets 添加 KEYSTORE_BASE64 / KEYSTORE_PASSWORD /
 # KEY_ALIAS / KEY_PASSWORD，并扩展 release 构建（后续可帮你加）。

@@ -1,15 +1,50 @@
+<!--
+  应用图标
+  ========
+  "两点一线"的抽象：两个端点（手机与电脑）由一道光弧连接。
+  弧线用渐变描边，呼应玻璃材质的高光走向。
+  刻意保持极简 —— 图标在小尺寸下任何细节都会糊成噪点。
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- 背景：深色底，与环境层同色系 -->
     <path
-        android:fillColor="#2D6CDF"
+        android:fillColor="#121A2C"
         android:pathData="M0,0h108v108h-108z" />
+
+    <!-- 连接弧：自左下端点划向右上端点 -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M22,50h24v8H22zM62,50h24v8H62z" />
+        android:pathData="M34,70 C34,46 74,62 74,38"
+        android:strokeLineCap="round"
+        android:strokeWidth="6">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:endX="74"
+                android:endY="38"
+                android:startX="34"
+                android:startY="70"
+                android:type="linear">
+                <item
+                    android:color="#3D9AAB"
+                    android:offset="0" />
+                <item
+                    android:color="#6EE7F9"
+                    android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 两个端点：青色为手机，白色为电脑 -->
     <path
-        android:fillColor="#A8D0FF"
-        android:pathData="M42,38h10v32h-10zM56,46h10v16h-10z" />
+        android:fillColor="#6EE7F9"
+        android:pathData="M25,70a9,9 0 1,0 18,0a9,9 0 1,0 -18,0z" />
+    <path
+        android:fillColor="#F3F6FB"
+        android:pathData="M65,38a9,9 0 1,0 18,0a9,9 0 1,0 -18,0z" />
 </vector>
+

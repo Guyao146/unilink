@@ -1,223 +1,316 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  主界面
+  ======
+  结构：可滚动的玻璃卡片流。
+
+  相比旧版把二十来个控件平铺在一个 LinearLayout 里，这里按"关注点"
+  分成 4 张卡片：账号 / 连接 / 同步 / 权限，日志作为独立区域收在最后。
+  改为滚动而非塞满一屏 —— 内容优先，控件让位。
+
+  所有 id 与旧版完全一致，MainActivity 的 findViewById 无需改动。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:scrollbars="none">
 
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        android:text="未启动" />
-
-    <TextView
-        android:id="@+id/tvListener"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textSize="12sp"
-        android:text="通知读取权限：检测中…" />
-
-    <!-- ================= 扫码登录 authentik ================= -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="#1A1F2B"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:paddingStart="@dimen/gutter"
+        android:paddingEnd="@dimen/gutter"
+        android:paddingTop="@dimen/sp_2xl"
+        android:paddingBottom="@dimen/sp_2xl">
+
+        <!-- ═══════════ 顶部：标题 + 状态胶囊 ═══════════ -->
 
         <TextView
-            android:id="@+id/tvAuth"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/login_none"
-            android:textColor="#D8DEE9"
-            android:textSize="12sp" />
+            android:text="@string/app_name"
+            style="@style/TextDisplay" />
 
-        <EditText
-            android:id="@+id/etQrServer"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:hint="扫码登录服务地址，如 https://qr.example.com"
-            android:inputType="textUri"
-            android:singleLine="true"
-            android:textColorHint="#7A8699"
-            android:textSize="13sp" />
+            android:layout_marginTop="@dimen/sp_sm"
+            android:background="@drawable/pill_status"
+            android:paddingStart="@dimen/sp_md"
+            android:paddingEnd="@dimen/sp_md"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="未启动"
+            style="@style/TextLabel" />
+
+        <!-- ═══════════ 账号（扫码登录）═══════════ -->
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginTop="@dimen/sp_xl"
+            style="@style/CardGlass">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_account"
+                style="@style/TextSection" />
+
+            <TextView
+                android:id="@+id/tvAuth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/login_none"
+                style="@style/TextLabel" />
+
+            <EditText
+                android:id="@+id/etQrServer"
+                android:layout_marginTop="@dimen/sp_md"
+                android:hint="@string/hint_qr_server"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                style="@style/FieldGlass" />
 
             <Button
                 android:id="@+id/btnLogin"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="登录 authentik" />
+                android:layout_width="match_parent"
+                android:layout_marginTop="@dimen/sp_md"
+                android:text="@string/btn_login"
+                style="@style/BtnPrimary" />
 
-            <Button
-                android:id="@+id/btnScanLogin"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="扫码登录" />
+                android:layout_marginTop="@dimen/sp_sm"
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btnLogout"
+                <Button
+                    android:id="@+id/btnScanLogin"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_scan"
+                    style="@style/BtnGlass" />
+
+                <Button
+                    android:id="@+id/btnLogout"
+                    android:layout_width="0dp"
+                    android:layout_marginStart="@dimen/sp_sm"
+                    android:layout_weight="1"
+                    android:text="@string/btn_logout"
+                    style="@style/BtnGlass" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <!-- ═══════════ 连接 ═══════════ -->
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_md"
+            style="@style/CardGlass">
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="退出" />
+                android:text="@string/sec_connection"
+                style="@style/TextSection" />
+
+            <EditText
+                android:id="@+id/etServer"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:hint="@string/hint_server"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                style="@style/FieldGlass" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/etRoom"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:hint="@string/hint_room"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    style="@style/FieldGlass" />
+
+                <EditText
+                    android:id="@+id/etToken"
+                    android:layout_width="0dp"
+                    android:layout_marginStart="@dimen/sp_sm"
+                    android:layout_weight="1"
+                    android:hint="@string/hint_token"
+                    android:importantForAutofill="no"
+                    android:inputType="textPassword"
+                    style="@style/FieldGlass" />
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/etName"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:hint="@string/hint_device"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                style="@style/FieldGlass" />
+
+            <Button
+                android:id="@+id/btnStart"
+                android:layout_width="match_parent"
+                android:layout_marginTop="@dimen/sp_md"
+                android:text="@string/btn_start"
+                style="@style/BtnPrimary" />
+
+            <Button
+                android:id="@+id/btnStop"
+                android:layout_width="match_parent"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/btn_stop"
+                style="@style/BtnGlass" />
+        </LinearLayout>
+
+        <!-- ═══════════ 同步开关 ═══════════ -->
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_md"
+            style="@style/CardGlass">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_sync"
+                style="@style/TextSection" />
+
+            <Switch
+                android:id="@+id/swMirror"
+                android:layout_marginTop="@dimen/sp_xs"
+                android:text="@string/sw_mirror"
+                style="@style/SwitchRow" />
+
+            <Switch
+                android:id="@+id/swRecvNotify"
+                android:text="@string/sw_recv_notify"
+                style="@style/SwitchRow" />
+
+            <Switch
+                android:id="@+id/swRecvClip"
+                android:text="@string/sw_recv_clip"
+                style="@style/SwitchRow" />
+
+            <Button
+                android:id="@+id/btnShareClip"
+                android:layout_width="match_parent"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/btn_share_clip"
+                style="@style/BtnGlass" />
+        </LinearLayout>
+
+        <!-- ═══════════ 权限 ═══════════ -->
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_md"
+            style="@style/CardGlass">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_permission"
+                style="@style/TextSection" />
+
+            <TextView
+                android:id="@+id/tvListener"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/perm_checking"
+                style="@style/TextLabel" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_md"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnAccess"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_notif_access"
+                    style="@style/BtnGlassSmall" />
+
+                <Button
+                    android:id="@+id/btnPerm"
+                    android:layout_width="0dp"
+                    android:layout_marginStart="@dimen/sp_sm"
+                    android:layout_weight="1"
+                    android:text="@string/btn_notif_post"
+                    style="@style/BtnGlassSmall" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnA11y"
+                android:layout_width="match_parent"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/btn_a11y"
+                style="@style/BtnGlassSmall" />
+        </LinearLayout>
+
+        <!-- ═══════════ 日志 ═══════════ -->
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_md"
+            style="@style/CardGlass">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_activity"
+                    style="@style/TextSection" />
+
+                <Button
+                    android:id="@+id/btnClear"
+                    android:layout_width="wrap_content"
+                    android:minWidth="0dp"
+                    android:paddingStart="@dimen/sp_md"
+                    android:paddingEnd="@dimen/sp_md"
+                    android:text="@string/btn_clear"
+                    style="@style/BtnGlassSmall" />
+            </LinearLayout>
+
+            <!-- 日志区固定高度：让它成为一个可滚动的"窗口"，
+                 而不是无限拉长把整页撑开 -->
+            <ScrollView
+                android:id="@+id/svLog"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginTop="@dimen/sp_md"
+                android:background="@drawable/log_surface"
+                android:scrollbars="none">
+
+                <TextView
+                    android:id="@+id/tvLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:lineSpacingMultiplier="1.3"
+                    android:padding="@dimen/sp_md"
+                    android:textColor="@color/log_text"
+                    android:textIsSelectable="true"
+                    android:textSize="@dimen/t_caption" />
+            </ScrollView>
         </LinearLayout>
     </LinearLayout>
-
-    <EditText
-        android:id="@+id/etServer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="服务器地址，如 ws://192.168.1.100:8765/ws"
-        android:inputType="textUri"
-        android:singleLine="true" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/etRoom"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="房间码"
-            android:inputType="text"
-            android:singleLine="true" />
-
-        <EditText
-            android:id="@+id/etToken"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="访问令牌（可空）"
-            android:inputType="textPassword"
-            android:singleLine="true" />
-    </LinearLayout>
-
-    <EditText
-        android:id="@+id/etName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="设备名（显示在电脑端）"
-        android:inputType="text"
-        android:singleLine="true" />
-
-    <Switch
-        android:id="@+id/swMirror"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="把本机状态栏通知同步给电脑" />
-
-    <Switch
-        android:id="@+id/swRecvNotify"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="接收电脑的消息与通知提醒" />
-
-    <Switch
-        android:id="@+id/swRecvClip"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="自动接收电脑剪贴板" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btnStart"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="连接并保持后台" />
-
-        <Button
-            android:id="@+id/btnStop"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="断开" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btnAccess"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="授予通知使用权" />
-
-        <Button
-            android:id="@+id/btnPerm"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="允许弹出通知" />
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btnA11y"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="开启无障碍（电脑回复自动发送，推荐）" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btnShareClip"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="发送剪贴板到电脑" />
-
-        <Button
-            android:id="@+id/btnClear"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="清空日志" />
-    </LinearLayout>
-
-    <ScrollView
-        android:id="@+id/svLog"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="6dp"
-        android:layout_weight="1"
-        android:background="#101418"
-        android:fadingEdge="vertical">
-
-        <TextView
-            android:id="@+id/tvLog"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:padding="8dp"
-            android:textColor="#9FE8B4"
-            android:textIsSelectable="true"
-            android:textSize="11sp" />
-    </ScrollView>
-
-</LinearLayout>
+</ScrollView>

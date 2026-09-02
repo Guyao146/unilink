@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ScrollView
@@ -21,6 +22,7 @@ import com.unilink.app.auth.AuthSession
 import com.unilink.app.auth.LoginActivity
 import com.unilink.app.auth.QrTicket
 import com.unilink.app.auth.ScanLoginActivity
+import com.unilink.app.ui.Motion
 import org.json.JSONObject
 
 class MainActivity : Activity() {
@@ -44,25 +46,49 @@ class MainActivity : Activity() {
 
     private val tick = object : Runnable {
         override fun run() {
-            tvStatus.text = Hub.status
-            val nl = if (notifListenerEnabled())
-                "🟢 通知读取权限：已授予${if (Hub.listenerBound) "（工作中）" else ""}"
-            else
-                "🔴 通知读取权限：未授予 —— 请点「授予通知使用权」"
-            val al = if (Hub.a11y) "  |  🟢 无障碍自动回复：已开启"
-                     else "  |  ⚪ 无障碍自动回复：未开启（可选，点下方按钮开启）"
-            tvListener.text = nl + al
+            renderStatus()
+            renderPermissions()
             refreshAuthLine()
-            val sb = StringBuilder()
-            synchronized(Hub.logs) {
-                for (l in Hub.logs) sb.append(l).append('\n')
-            }
-            if (sb.isNotEmpty()) {
-                tvLog.text = sb.toString()
-                svLog.post { svLog.fullScroll(View.FOCUS_DOWN) }
-            }
+            renderLog()
             handler.postDelayed(this, 600)
         }
+    }
+
+    /** 状态胶囊：文字 + 颜色随连接态平滑过渡 */
+    private fun renderStatus() {
+        val s = Hub.status
+        if (tvStatus.text != s) tvStatus.text = s
+        val color = when {
+            s.contains("已连接") || s.contains("加密") -> R.color.ac_success
+            s.contains("连接中") || s.contains("等待") -> R.color.ac_warn
+            s.contains("错误") || s.contains("断开") || s.contains("失败") -> R.color.ac_danger
+            else -> R.color.ink_secondary
+        }
+        Motion.tintText(tvStatus, getColor(color))
+    }
+
+    /** 权限行：用圆点而非 emoji，保证各机型字形一致 */
+    private fun renderPermissions() {
+        val notif = if (notifListenerEnabled())
+            "● 通知读取权限已授予${if (Hub.listenerBound) "，工作中" else ""}"
+        else
+            "○ 通知读取权限未授予 —— 点下方「通知使用权」"
+        val a11y = if (Hub.a11y) "\n● 无障碍自动回复已开启"
+                   else "\n○ 无障碍自动回复未开启（可选）"
+        val text = notif + a11y
+        if (tvListener.text != text) tvListener.text = text
+    }
+
+    private fun renderLog() {
+        val sb = StringBuilder()
+        synchronized(Hub.logs) {
+            for (l in Hub.logs) sb.append(l).append('\n')
+        }
+        if (sb.isEmpty()) return
+        val text = sb.toString()
+        if (tvLog.text == text) return          // 内容未变就不重排版
+        tvLog.text = text
+        svLog.post { svLog.fullScroll(View.FOCUS_DOWN) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,7 +154,30 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btnScanLogin).setOnClickListener { doScanLogin() }
         findViewById<Button>(R.id.btnLogout).setOnClickListener { doLogout() }
 
+        applyMotion()
         handler.post(tick)
+    }
+
+    /**
+     * 挂上交互光效与入场动画。
+     *
+     * 卡片按在布局中的顺序错开淡入 —— 顺序取自滚动容器的子节点，
+     * 这样新增卡片时不必回来改这里。
+     */
+    private fun applyMotion() {
+        Motion.pressAll(
+            findViewById(R.id.btnLogin), findViewById(R.id.btnScanLogin),
+            findViewById(R.id.btnLogout), findViewById(R.id.btnStart),
+            findViewById(R.id.btnStop), findViewById(R.id.btnShareClip),
+            findViewById(R.id.btnAccess), findViewById(R.id.btnPerm),
+            findViewById(R.id.btnA11y), findViewById(R.id.btnClear)
+        )
+
+        // 卡片流容器 = 日志滚动区的祖父级（卡片 → 卡片流 → 根 ScrollView）
+        val column = svLog.parent?.let { it as? View }?.parent as? ViewGroup ?: return
+        for (i in 0 until column.childCount) {
+            Motion.enter(column.getChildAt(i), i)
+        }
     }
 
     override fun onPause() {

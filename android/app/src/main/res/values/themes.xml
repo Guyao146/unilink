@@ -1,19 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.UniLink" parent="android:Theme.Material.Light.DarkActionBar" />
 
     <!--
-      登录 / 扫码用的透明主题。
-      这两个 Activity 本身不显示界面（只负责跳浏览器、开扫码器、弹确认框），
-      因此做成全透明，视觉上像是从主界面直接弹出的对话框。
-      刻意继承平台主题而非 AppCompat —— 两个 Activity 都是纯 android.app.Activity，
-      与项目其余部分保持一致，不引入 AppCompat 主题属性的依赖。
+      基础主题
+      ========
+      刻意保留平台 Material 主题作为父级（不引入 MaterialComponents）：
+      本项目的视觉全部由自绘 drawable 承载，用平台主题可避免
+      Material 组件的默认样式（涟漪色、控件内边距）与之打架。
     -->
-    <style name="Theme.UniLink.Invisible" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.UniLink" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_ambient</item>
+        <item name="android:colorAccent">@color/ac_primary</item>
+        <item name="android:textColorPrimary">@color/ink_primary</item>
+        <item name="android:textColorSecondary">@color/ink_secondary</item>
+        <item name="android:textColorHint">@color/ink_tertiary</item>
+        <!-- 状态栏与导航栏透明：让环境层渐变延伸到屏幕边缘。
+             有色状态栏会把玻璃层"切断"，沉浸感随之消失 -->
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:navigationBarColor">@color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!--
+      登录 / 扫码 Activity 的透明主题。
+      这两个 Activity 没有自己的界面（只跳浏览器、开扫码器、弹确认框），
+      做成全透明后视觉上像是从主界面直接浮出的对话框。
+    -->
+    <style name="Theme.UniLink.Invisible" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowNoTitle">true</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:colorAccent">@color/ac_primary</item>
+    </style>
+
+    <!-- ══════════════ 文字 ══════════════
+
+         样式名刻意不用点号分段（如 T.Display）：Android 会把点号前的部分
+         当作**隐式父样式**去查找，父样式不存在时 AAPT2 直接报
+         "No resource found that matches the given name"。
+         需要继承时一律写显式 parent。
+    -->
+
+    <style name="TextDisplay">
+        <item name="android:textSize">@dimen/t_display</item>
+        <item name="android:textColor">@color/ink_primary</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 卡片小标题：字距放宽，作为分区标识而非阅读内容 -->
+    <style name="TextSection">
+        <item name="android:textSize">@dimen/t_caption</item>
+        <item name="android:textColor">@color/ac_primary</item>
+        <item name="android:letterSpacing">0.14</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextTitle">
+        <item name="android:textSize">@dimen/t_title</item>
+        <item name="android:textColor">@color/ink_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextBody">
+        <item name="android:textSize">@dimen/t_body</item>
+        <item name="android:textColor">@color/ink_primary</item>
+    </style>
+
+    <style name="TextLabel">
+        <item name="android:textSize">@dimen/t_label</item>
+        <item name="android:textColor">@color/ink_secondary</item>
+        <item name="android:lineSpacingMultiplier">1.25</item>
+    </style>
+
+    <style name="TextCaption">
+        <item name="android:textSize">@dimen/t_caption</item>
+        <item name="android:textColor">@color/ink_tertiary</item>
+    </style>
+
+    <!-- ══════════════ 控件 ══════════════ -->
+
+    <style name="FieldGlass">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/h_field</item>
+        <item name="android:background">@drawable/field_glass</item>
+        <item name="android:paddingStart">@dimen/sp_md</item>
+        <item name="android:paddingEnd">@dimen/sp_md</item>
+        <item name="android:textSize">@dimen/t_body</item>
+        <item name="android:textColor">@color/ink_primary</item>
+        <item name="android:textColorHint">@color/ink_tertiary</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <style name="BtnPrimary">
+        <item name="android:layout_height">@dimen/h_control</item>
+        <item name="android:background">@drawable/btn_primary</item>
+        <item name="android:textColor">@color/ink_on_accent</item>
+        <item name="android:textSize">@dimen/t_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="BtnGlass">
+        <item name="android:layout_height">@dimen/h_control</item>
+        <item name="android:background">@drawable/btn_glass</item>
+        <item name="android:textColor">@color/ink_primary</item>
+        <item name="android:textSize">@dimen/t_body</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="BtnGlassSmall" parent="BtnGlass">
+        <item name="android:layout_height">@dimen/h_control_sm</item>
+        <item name="android:textSize">@dimen/t_label</item>
+    </style>
+
+    <style name="SwitchRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:textSize">@dimen/t_body</item>
+        <item name="android:textColor">@color/ink_primary</item>
+        <item name="android:background">@null</item>
+    </style>
+
+    <!-- 玻璃卡片容器 -->
+    <style name="CardGlass">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/glass_card</item>
+        <item name="android:padding">@dimen/sp_lg</item>
+        <item name="android:orientation">vertical</item>
     </style>
 </resources>
+
+

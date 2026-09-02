@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UniLink 设计系统 · 色板
+  =======================
+  设计语言融合两条线索：
+   · Apple Liquid Glass —— 半透明折射、镜面高光、控件悬浮于内容之上
+   · 澎湃OS 生命感美学 —— 柔光玻璃、感知环境色、点按有光
+
+  为何以深色为基调：玻璃材质依赖背景透出来产生层次，深色环境下
+  高光与折射的对比最强；且本 App 的核心区域（日志流）本就是深色。
+  浅色环境走 values-night 的反向变体（见同名文件）。
+
+  命名约定：
+    amb_*    环境层（窗口底色，玻璃"折射"的对象）
+    glass_*  玻璃材质本身（填充与描边）
+    ink_*    文字与图标
+    ac_*     强调色（accent）
+-->
+<resources>
+
+    <!-- ── 环境层：三段渐变模拟自然光衰减，玻璃卡片会"折射"这层颜色 ── -->
+    <color name="amb_top">#0A0E18</color>
+    <color name="amb_mid">#121A2C</color>
+    <color name="amb_bottom">#0B1220</color>
+
+    <!-- 环境光斑：主色调在背景上的一团弥散辉光，制造"呼吸感"来源 -->
+    <color name="amb_glow">#2A6EE7F9</color>
+    <color name="amb_glow_fade">#006EE7F9</color>
+
+    <!-- ── 玻璃材质 ──
+         fill 为主体填充（越靠上越亮，模拟受光面）
+         edge 为描边：顶亮底暗，这是"镜面高光"的关键，缺了它玻璃会变成塑料 -->
+    <color name="glass_fill_top">#1FFFFFFF</color>
+    <color name="glass_fill_bottom">#0FFFFFFF</color>
+    <color name="glass_edge_light">#40FFFFFF</color>
+    <color name="glass_edge_dark">#0AFFFFFF</color>
+
+    <!-- 内嵌玻璃（卡片里的卡片）：更低通透度，避免层层叠加后糊成一片 -->
+    <color name="glass_inset_fill">#14000000</color>
+    <color name="glass_inset_edge">#1AFFFFFF</color>
+
+    <!-- 点按光效：澎湃的"点按有光"—— 触点处泛起的一层暖白 -->
+    <color name="glass_press">#26FFFFFF</color>
+    <color name="glass_ripple">#336EE7F9</color>
+
+    <!-- ── 文字 ── -->
+    <color name="ink_primary">#F3F6FB</color>
+    <color name="ink_secondary">#A3AFC4</color>
+    <color name="ink_tertiary">#6D7889</color>
+    <color name="ink_on_accent">#04121A</color>
+
+    <!-- ── 强调色 ──
+         主色取青蓝：既呼应"连接/信号"的语义，又在深色玻璃上有足够亮度 -->
+    <color name="ac_primary">#6EE7F9</color>
+    <color name="ac_primary_dim">#3D9AAB</color>
+    <color name="ac_primary_wash">#1F6EE7F9</color>
+
+    <color name="ac_success">#86EFAC</color>
+    <color name="ac_success_wash">#1F86EFAC</color>
+    <color name="ac_warn">#FCD34D</color>
+    <color name="ac_warn_wash">#1FFCD34D</color>
+    <color name="ac_danger">#FCA5A5</color>
+    <color name="ac_danger_wash">#1FFCA5A5</color>
+
+    <!-- 日志流：等宽文本区，比玻璃卡片更暗以突出内容 -->
+    <color name="log_bg">#33040814</color>
+    <color name="log_text">#9FE8B4</color>
+
+    <color name="transparent">#00000000</color>
+</resources>

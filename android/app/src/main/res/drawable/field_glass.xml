@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  输入框（内嵌玻璃）
+  ==================
+  与按钮相反：按钮是"凸起"的（顶部亮边），输入框是"凹陷"的
+  （顶部暗、底部微亮），靠这个明暗反转让用户一眼分清可点与可填。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 描边：顶部暗 → 底部亮，制造内凹感 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_control" />
+            <gradient
+                android:angle="270"
+                android:endColor="@color/glass_edge_light"
+                android:startColor="@color/glass_edge_dark"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- 凹陷的暗色填充 -->
+    <item
+        android:bottom="@dimen/hairline"
+        android:left="@dimen/hairline"
+        android:right="@dimen/hairline"
+        android:top="@dimen/hairline">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_control" />
+            <solid android:color="@color/glass_inset_fill" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UniLink 设计系统 · 尺度
+  =======================
+  圆角遵循 Apple 的**同心圆角**原则：内层半径 = 外层半径 − 两者间距。
+  这样嵌套元素的圆弧才是同心的，视觉上不会出现"角里套角"的错位感。
+
+  例：卡片 r=22dp，内边距 12dp，则内部控件 r=10dp。
+      控件 r=16dp，内边距 6dp，则其中的徽标 r=10dp。
+
+  间距全部取 4dp 的倍数，保证纵向节奏统一。
+-->
+<resources>
+
+    <!-- ── 圆角（同心阶梯）── -->
+    <dimen name="r_sheet">28dp</dimen>     <!-- 最外层容器/底部面板 -->
+    <dimen name="r_card">22dp</dimen>      <!-- 玻璃卡片 -->
+    <dimen name="r_control">16dp</dimen>   <!-- 按钮、输入框 -->
+    <dimen name="r_inner">10dp</dimen>     <!-- 卡片内的内嵌块 -->
+    <dimen name="r_chip">8dp</dimen>       <!-- 徽标、小标签 -->
+    <dimen name="r_pill">999dp</dimen>     <!-- 胶囊（状态指示条）-->
+
+    <!-- ── 间距 ── -->
+    <dimen name="sp_xs">4dp</dimen>
+    <dimen name="sp_sm">8dp</dimen>
+    <dimen name="sp_md">12dp</dimen>
+    <dimen name="sp_lg">16dp</dimen>
+    <dimen name="sp_xl">20dp</dimen>
+    <dimen name="sp_2xl">24dp</dimen>
+
+    <!-- 屏幕左右安全边距：内容不贴边，让玻璃卡片"浮"在环境上 -->
+    <dimen name="gutter">16dp</dimen>
+
+    <!-- ── 描边 ──
+         1dp 的高光边是玻璃质感的核心，再粗就变成"框"了 -->
+    <dimen name="hairline">1dp</dimen>
+
+    <!-- ── 控件高度 ── -->
+    <dimen name="h_control">48dp</dimen>       <!-- 触摸目标不低于 48dp（无障碍）-->
+    <dimen name="h_control_sm">40dp</dimen>
+    <dimen name="h_field">52dp</dimen>
+
+    <!-- ── 字号 ── -->
+    <dimen name="t_display">26sp</dimen>   <!-- 页面主标题 -->
+    <dimen name="t_title">17sp</dimen>     <!-- 卡片标题 -->
+    <dimen name="t_body">15sp</dimen>      <!-- 正文/输入 -->
+    <dimen name="t_label">13sp</dimen>     <!-- 说明文字 -->
+    <dimen name="t_caption">11sp</dimen>   <!-- 徽标、日志 -->
+
+    <!-- ── 玻璃模糊半径（API 31+ RenderEffect）── -->
+    <dimen name="blur_card">24dp</dimen>
+    <dimen name="blur_bar">32dp</dimen>
+</resources>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  玻璃卡片
+  ========
+  两层叠加实现"镜面高光边"：
+   1. 底层：描边渐变（顶亮底暗）—— 模拟光线从上方打到玻璃棱上
+   2. 顶层：内缩 1dp 的填充渐变 —— 玻璃本体，上亮下暗
+
+  为什么不用单个 shape 的 stroke：Android 的 stroke 只支持纯色，
+  而玻璃的高光边必须是渐变的（顶部亮、底部几乎消失），
+  否则会看起来像描了一圈生硬的白框。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 高光描边层 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_card" />
+            <gradient
+                android:angle="270"
+                android:endColor="@color/glass_edge_dark"
+                android:startColor="@color/glass_edge_light"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- 玻璃本体（内缩 1dp 露出上面那圈高光）-->
+    <item
+        android:bottom="@dimen/hairline"
+        android:left="@dimen/hairline"
+        android:right="@dimen/hairline"
+        android:top="@dimen/hairline">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_card" />
+            <gradient
+                android:angle="270"
+                android:endColor="@color/glass_fill_bottom"
+                android:startColor="@color/glass_fill_top"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

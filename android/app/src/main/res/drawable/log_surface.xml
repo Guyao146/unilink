@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  日志区背景
+  ==========
+  比玻璃卡片更暗、更实 —— 等宽文本需要稳定的对比度，
+  不能让背景的折射变化干扰阅读。这里刻意"退出"玻璃语言。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="@dimen/r_inner" />
+    <solid android:color="@color/log_bg" />
+    <stroke
+        android:width="@dimen/hairline"
+        android:color="@color/glass_inset_edge" />
+</shape>

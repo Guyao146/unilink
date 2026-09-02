@@ -1,0 +1,73 @@
+name: Publish auth-server image
+
+# 把 auth-server 打包成容器镜像推到 GHCR，
+# 这样部署端只需一份 docker-compose.yml 即可 docker pull 运行，无需 clone 源码。
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'auth-server/**'
+      - '.github/workflows/publish-image.yml'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write        # 推送到 GHCR 所必需
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # GHCR 的镜像路径必须全小写，而 GitHub 用户名可能含大写
+      - name: Resolve image name
+        id: img
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/unilink-auth" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 服务器可能是 arm64（各类 ARM VPS / Apple 芯片），一并出多架构镜像
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Compute tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.img.outputs.name }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+            type=sha,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth-server
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          {
+            echo "### 镜像已发布"
+            echo
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo
+            echo "首次发布后需把 package 改为 Public，否则 \`docker pull\` 会报 unauthorized："
+            echo "仓库页 → Packages → unilink-auth → Package settings → Change visibility"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,52 @@
+# UniLink 扫码登录服务 —— 开箱即用编排
+#
+# 不需要 clone 源码，只要这一个文件加一份 .env：
+#     curl -O https://raw.githubusercontent.com/Guyao146/unilink/main/deploy/docker-compose.yml
+#     curl -o .env https://raw.githubusercontent.com/Guyao146/unilink/main/deploy/.env.example
+#     vi .env          # 填 4 个值
+#     docker compose up -d
+#
+# 升级：docker compose pull && docker compose up -d
+#
+# 服务只绑 127.0.0.1:8790，必须经 nginx/Caddy 反代出去 ——
+# 直接暴露公网会让授权码与 authentik 令牌明文传输。
+
+services:
+  unilink-auth:
+    image: ghcr.io/guyao146/unilink-auth:latest
+    container_name: unilink-auth
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8790:8790"
+
+    env_file: .env
+
+    environment:
+      # 下游客户端（即 authentik 里的 OAuth Source）。
+      # 用环境变量拼装，省去在容器里维护 config.json。
+      UNILINK_CLIENTS: >-
+        [{"name":"authentik",
+          "client_id":"${UNILINK_CLIENT_ID:-unilink-qr}",
+          "client_secret":"${UNILINK_CLIENT_SECRET:?必须在 .env 中设置 UNILINK_CLIENT_SECRET}",
+          "redirect_uris":["${UNILINK_AUTHENTIK_URL:?必须设置}/source/oauth/callback/${UNILINK_CLIENT_ID:-unilink-qr}/"]}]
+
+    volumes:
+      # RSA 签名私钥必须持久化 —— 丢了等于换发卡机构，
+      # authentik 缓存的公钥会验签失败
+      - unilink-keys:/app/keys
+
+    # authentik 也在 Docker 里时，取消下面注释即可走容器名直连，
+    # 免去出公网绕一圈（网络名用 docker network ls 查）。
+    # 注意 UNILINK_BASE_URL 仍必须是对外的 https 地址。
+    # networks:
+    #   - default
+    #   - authentik
+
+volumes:
+  unilink-keys:
+
+# networks:
+#   authentik:
+#     external: true
+#     name: authentik_default

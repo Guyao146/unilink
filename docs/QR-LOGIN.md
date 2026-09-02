@@ -29,7 +29,7 @@ userinfo，令牌被吊销立刻失效。签发的 `sub` 直接沿用 authentik 
 
 ## 一、部署 auth-server
 
-以下三种方式任选其一。**推荐 Docker**（与 authentik 部署方式一致，升级回滚都简单）。
+以下四种方式任选其一。**推荐方式 A**（一份 compose 文件即可，无需 clone 源码）。
 
 无论哪种方式，都要先准备一个客户端密钥：
 
@@ -41,19 +41,39 @@ python3 -c "import secrets;print(secrets.token_urlsafe(48))"
 
 ---
 
-### 方式 A：Docker Compose（推荐）
+### 方式 A：拉取预构建镜像（推荐）
+
+镜像已发布到 GHCR，支持 amd64 / arm64。只需两个文件：
 
 ```bash
-# 1. 拉代码
+mkdir -p /opt/unilink-auth && cd /opt/unilink-auth
+
+curl -O  https://raw.githubusercontent.com/Guyao146/unilink/main/deploy/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/Guyao146/unilink/main/deploy/.env.example
+
+vi .env          # 填 UNILINK_CLIENT_SECRET 与两个 URL
+docker compose up -d
+docker compose logs -f
+```
+
+升级：`docker compose pull && docker compose up -d`
+
+详细说明（备份、与 authentik 同网络等）见 [deploy/README.md](../deploy/README.md)。
+
+---
+
+### 方式 B：从源码构建镜像
+
+改过代码，或不想用预构建镜像：
+
+```bash
 cd /opt
 git clone https://github.com/Guyao146/unilink.git
 cd unilink/auth-server
 
-# 2. 配置
 cp .env.example .env
 vi .env          # 填 UNILINK_CLIENT_SECRET，核对两个 URL
 
-# 3. 启动
 docker compose up -d --build
 docker compose logs -f
 ```
@@ -76,16 +96,16 @@ curl -i http://127.0.0.1:8790/healthz
 ```
 
 > 容器只绑 `127.0.0.1:8790`，不会直接暴露到公网 —— 必须经第 1.5 步的反代出去。
-> `keys/` 挂成了宿主目录，RSA 签名私钥不会随容器重建而丢失。
+> RSA 签名私钥持久化在卷/宿主目录里，容器重建不会丢失。
 
 **authentik 也在 Docker 里？** 把 compose 文件末尾的 `networks` 段取消注释，
 改成 authentik 的网络名（`docker network ls` 查），然后 `.env` 里的
 `UNILINK_AUTHENTIK_URL` 可以改用容器名如 `http://authentik-server:9000`，
-省掉出公网绕一圈。注意此时 `UNILINK_BASE_URL` 仍必须是对外的 https 地址。
+省掉出公网绕一圈。注意 `UNILINK_BASE_URL` 仍必须是对外的 https 地址。
 
 ---
 
-### 方式 B：systemd（不想用 Docker）
+### 方式 C：systemd（不想用 Docker）
 
 ```bash
 # 1. 代码与虚拟环境
@@ -117,7 +137,7 @@ journalctl -u unilink-auth -f
 
 ---
 
-### 方式 C：先手动跑一遍（只为验证配置）
+### 方式 D：先手动跑一遍（只为验证配置）
 
 ```bash
 cd /opt/unilink/auth-server
@@ -137,7 +157,7 @@ vi config.json                    # 填 4 个值，见下表
 | `clients[0].redirect_uris` | `https://login.mcylyr.cn/source/oauth/callback/unilink-qr/` |
 
 配置有误时它会打印 `[配置错误] ...` 并退出，照提示改即可。
-这种方式关掉终端服务就停了，验证完请转 A 或 B。
+这种方式关掉终端服务就停了，验证完请转 A / B / C。
 
 ## 一点五、反向代理
 

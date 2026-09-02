@@ -132,15 +132,19 @@ App 内：
 想让手机变成「扫码登录所有 authentik 项目」的钥匙？部署 `auth-server` 并把它
 注册为 authentik 的一个登录源即可，下游项目**零改造**。
 
+镜像已发布到 GHCR，服务器上两个文件就能跑：
+
 ```bash
-cd unilink/auth-server
-pip install -r requirements.txt
-cp config.example.json config.json   # 按注释填写，须为 https
-python app.py
+mkdir -p /opt/unilink-auth && cd /opt/unilink-auth
+curl -O  https://raw.githubusercontent.com/Guyao146/unilink/main/deploy/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/Guyao146/unilink/main/deploy/.env.example
+vi .env          # 填客户端密钥与两个 URL
+docker compose up -d
 ```
 
-完整步骤（含 authentik 侧的 Source 与 Provider 配置）见
-**[docs/QR-LOGIN.md](docs/QR-LOGIN.md)**。
+再配一层反代（Caddy 一行 `gateway.example.com { reverse_proxy 127.0.0.1:8790 }`），
+以及 authentik 里的两处 Web 配置。完整步骤（含 systemd / 源码构建等其它部署方式）见
+**[docs/QR-LOGIN.md](docs/QR-LOGIN.md)**，一键部署速查见 **[deploy/README.md](deploy/README.md)**。
 
 ## 各功能使用说明
 

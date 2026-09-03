@@ -77,6 +77,18 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SakuraGu" style="@style/TextLabel" />
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:background="@drawable/row_glass"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/sp_lg"
+                android:paddingEnd="@dimen/sp_lg">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="版本" style="@style/TextBody" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1.0.0" style="@style/TextLabel" />
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/btnWebsite"
                 android:layout_width="match_parent"

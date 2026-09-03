@@ -72,7 +72,8 @@ object Motion {
         view.animate()
             .alpha(1f)
             .translationY(0f)
-            .setStartDelay(index * 40L)
+            // 每页的卡片数量不同；限制错开级数，让设置页与其他页面同速完成。
+            .setStartDelay(minOf(index, 3) * 40L)
             .setDuration(420L)
             .setInterpolator(SNAPPY)
             .start()

@@ -5,17 +5,6 @@
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tab_settings" style="@style/TextDisplay" />
         <TextView android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="@dimen/sp_lg" android:background="@drawable/field_glass" android:gravity="center_vertical" android:paddingStart="@dimen/sp_lg" android:text="⌕   搜索设置" android:textColor="@color/ink_tertiary" android:textSize="@dimen/t_body" />
 
-        <LinearLayout android:layout_marginTop="@dimen/sp_lg" style="@style/CardGlass">
-            <LinearLayout android:id="@+id/btnAbout" android:layout_width="match_parent" android:layout_height="76dp" android:background="@drawable/row_glass" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="@dimen/sp_lg" android:paddingEnd="@dimen/sp_lg">
-                <TextView android:layout_width="44dp" android:layout_height="44dp" android:background="@drawable/avatar_sakura" android:gravity="center" android:text="S" android:textColor="@android:color/white" android:textStyle="bold" />
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SakuraGu" style="@style/TextBody" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="UniLink · 关于我们" style="@style/TextCaption" />
-                </LinearLayout>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
-            </LinearLayout>
-        </LinearLayout>
-
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="权限与隐私" style="@style/TextLabel" />
         <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
             <LinearLayout style="@style/InfoRow">

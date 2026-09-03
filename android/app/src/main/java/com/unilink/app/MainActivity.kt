@@ -251,7 +251,6 @@ class MainActivity : Activity() {
         click(R.id.btnLogin) { doLogin() }
         click(R.id.btnScanLogin) { doScanLogin() }
         click(R.id.btnLogout) { doLogout() }
-        click(R.id.btnAbout) { showAbout() }
         click(R.id.btnAboutBottom) { showAbout() }
         click(R.id.btnAboutBack) { hideAbout() }
         click(R.id.btnWebsite) { openWebsite() }
@@ -327,7 +326,8 @@ class MainActivity : Activity() {
             if (available <= 0) return@post
             val itemWidth = available / tabs.size
             dockIndicator.layoutParams = dockIndicator.layoutParams.apply { width = itemWidth }
-            val target = (dock.paddingStart + itemWidth * index).toFloat()
+            // FrameLayout 已将子视图放在 paddingStart 内；再加一次会令高亮右偏。
+            val target = (itemWidth * index).toFloat()
             if (animate) {
                 dockIndicator.animate().translationX(target)
                     .setDuration(320L).setInterpolator(Motion.SNAPPY).start()

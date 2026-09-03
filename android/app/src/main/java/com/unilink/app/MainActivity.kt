@@ -41,6 +41,7 @@ class MainActivity : Activity() {
     // 首页状态区
     private lateinit var tvStatus: TextView
     private lateinit var tvStatusHint: TextView
+    private lateinit var tvIsland: TextView
     private lateinit var dotStatus: View
 
     // 连接页
@@ -102,6 +103,15 @@ class MainActivity : Activity() {
         Motion.tintText(tvStatus, color)
         tintDot(dotStatus, color)
         if (tvStatusHint.text != hint) tvStatusHint.text = hint
+
+        val island = when {
+            s.contains("已连接") || s.contains("加密") -> R.string.island_connected
+            s.contains("连接中") || s.contains("等待") -> R.string.island_connecting
+            s.contains("错误") || s.contains("失败") -> R.string.island_error
+            else -> R.string.island_idle
+        }
+        if (tvIsland.text.toString() != getString(island)) tvIsland.setText(island)
+        Motion.tintText(tvIsland, color)
     }
 
     /** 给圆点着色。圆点是共享 drawable，必须 mutate 后再改，否则会串色 */
@@ -175,6 +185,7 @@ class MainActivity : Activity() {
 
         tvStatus = findViewById(R.id.tvStatus)
         tvStatusHint = findViewById(R.id.tvStatusHint)
+        tvIsland = findViewById(R.id.tvIsland)
         dotStatus = findViewById(R.id.dotStatus)
 
         tvAuth = findViewById(R.id.tvAuth)

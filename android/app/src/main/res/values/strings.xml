@@ -17,6 +17,10 @@
     <string name="home_greeting">让设备之间，自然流动</string>
     <string name="home_status_label">连接状态</string>
     <string name="home_status_caption">安全连接 · 端到端加密</string>
+    <string name="island_idle">● 等待设备连接</string>
+    <string name="island_connecting">● 正在连接你的设备</string>
+    <string name="island_connected">● 已连接到桌面设备</string>
+    <string name="island_error">● 连接需要你的注意</string>
     <string name="sec_quick">快捷操作</string>
     <string name="quick_hint">常用操作会显示在这里</string>
     <string name="btn_start">连接并保持后台</string>

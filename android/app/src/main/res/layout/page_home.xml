@@ -33,9 +33,22 @@
             android:text="@string/home_greeting"
             style="@style/TextDisplay" />
 
+        <TextView
+            android:id="@+id/tvIsland"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginTop="@dimen/sp_lg"
+            android:background="@drawable/status_island"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/sp_lg"
+            android:paddingEnd="@dimen/sp_lg"
+            android:text="@string/island_idle"
+            android:textColor="@color/ink_secondary"
+            android:textSize="@dimen/t_label" />
+
         <!-- ═══ 状态卡：整页的主角 ═══ -->
         <LinearLayout
-            android:layout_marginTop="@dimen/sp_xl"
+            android:layout_marginTop="@dimen/sp_lg"
             android:paddingTop="@dimen/sp_2xl"
             android:paddingBottom="@dimen/sp_2xl"
             style="@style/CardGlass">

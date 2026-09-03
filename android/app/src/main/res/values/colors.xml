@@ -65,12 +65,12 @@
     <color name="ac_violet">#7C62E8</color>
     <color name="ac_violet_wash">#267C62E8</color>
 
-    <color name="ac_success">#4ADE80</color>
-    <color name="ac_success_wash">#264ADE80</color>
-    <color name="ac_warn">#FBBF24</color>
-    <color name="ac_warn_wash">#26FBBF24</color>
-    <color name="ac_danger">#FB7185</color>
-    <color name="ac_danger_wash">#26FB7185</color>
+    <color name="ac_success">#1F9D63</color>
+    <color name="ac_success_wash">#261F9D63</color>
+    <color name="ac_warn">#D98A05</color>
+    <color name="ac_warn_wash">#26D98A05</color>
+    <color name="ac_danger">#DA4961</color>
+    <color name="ac_danger_wash">#26DA4961</color>
 
     <!-- 悬浮 Dock：比卡片更实，因为它要压住滚动的内容 -->
     <color name="dock_fill_top">#DBFFFFFF</color>

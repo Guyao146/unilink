@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -61,7 +62,10 @@ class MainActivity : Activity() {
     /** 四个页面与对应的 Dock 项，索引一一对应 */
     private lateinit var pages: List<View>
     private lateinit var tabs: List<ViewGroup>
+    private lateinit var dock: View
+    private lateinit var dockIndicator: View
     private var currentTab = 0
+    private var showingAbout = false
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -202,7 +206,8 @@ class MainActivity : Activity() {
             findViewById(R.id.pageHome),
             findViewById(R.id.pageLink),
             findViewById(R.id.pageSync),
-            findViewById(R.id.pageSettings)
+            findViewById(R.id.pageSettings),
+            findViewById(R.id.pageAbout)
         )
         tabs = listOf(
             findViewById(R.id.tabHome),
@@ -210,6 +215,9 @@ class MainActivity : Activity() {
             findViewById(R.id.tabSync),
             findViewById(R.id.tabSettings)
         )
+        dock = findViewById(R.id.dock)
+        dockIndicator = findViewById(R.id.dockIndicator)
+        dockIndicator.isSelected = true
     }
 
     private fun loadPrefs() {
@@ -243,6 +251,10 @@ class MainActivity : Activity() {
         click(R.id.btnLogin) { doLogin() }
         click(R.id.btnScanLogin) { doScanLogin() }
         click(R.id.btnLogout) { doLogout() }
+        click(R.id.btnAbout) { showAbout() }
+        click(R.id.btnAboutBottom) { showAbout() }
+        click(R.id.btnAboutBack) { hideAbout() }
+        click(R.id.btnWebsite) { openWebsite() }
     }
 
     /** 绑定点击并附带按压光效，省掉每处重复两行 */
@@ -280,6 +292,8 @@ class MainActivity : Activity() {
 
     private fun selectTab(index: Int, animate: Boolean = true) {
         currentTab = index
+        showingAbout = false
+        dock.visibility = View.VISIBLE
         pages.forEachIndexed { i, page ->
             page.visibility = if (i == index) View.VISIBLE else View.GONE
         }
@@ -302,6 +316,49 @@ class MainActivity : Activity() {
             page.animate().alpha(1f).translationY(0f)
                 .setDuration(280L).setInterpolator(Motion.SNAPPY).start()
             enterCards(page)
+        }
+        moveDockIndicator(index, animate)
+    }
+
+    /** Dock 选中底板在项目间连续滑动，而非突兀地逐项切换。 */
+    private fun moveDockIndicator(index: Int, animate: Boolean) {
+        dock.post {
+            val available = dock.width - dock.paddingStart - dock.paddingEnd
+            if (available <= 0) return@post
+            val itemWidth = available / tabs.size
+            dockIndicator.layoutParams = dockIndicator.layoutParams.apply { width = itemWidth }
+            val target = (dock.paddingStart + itemWidth * index).toFloat()
+            if (animate) {
+                dockIndicator.animate().translationX(target)
+                    .setDuration(320L).setInterpolator(Motion.SNAPPY).start()
+            } else {
+                dockIndicator.translationX = target
+            }
+        }
+    }
+
+    private fun showAbout() {
+        showingAbout = true
+        pages.forEachIndexed { i, page -> page.visibility = if (i == 4) View.VISIBLE else View.GONE }
+        dock.animate().alpha(0f).setDuration(160L).withEndAction {
+            dock.visibility = View.GONE
+            dock.alpha = 1f
+        }.start()
+        val about = pages[4]
+        about.alpha = 0f
+        about.translationX = 36f
+        about.animate().alpha(1f).translationX(0f).setDuration(300L)
+            .setInterpolator(Motion.SNAPPY).start()
+        enterCards(about)
+    }
+
+    private fun hideAbout() = selectTab(3)
+
+    private fun openWebsite() {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mcylyr.cn")))
+        } catch (_: Throwable) {
+            toast("无法打开官网，请检查浏览器是否可用")
         }
     }
 
@@ -332,6 +389,11 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (showingAbout) hideAbout() else super.onBackPressed()
     }
 
     // ------------------------------------------------------------------

@@ -1,190 +1,58 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<!--
-  椤甸潰 4 路 璁剧疆
-  =============
-  鏉冮檺鎺堜簣闆嗕腑鍦ㄨ繖閲屻€傛瘡椤规潈闄愪竴琛岋細鐘舵€佸渾鐐?+ 鍚嶇О + 璇存槑 + 鎿嶄綔銆?
-
-  鏉冮檺鏈川涓婃槸"涓€娆℃€ч厤缃?锛屾斁鍦ㄩ椤靛彧浼氬鍔犳棩甯镐娇鐢ㄧ殑瑙嗚鍣煶 鈥斺€?
-  杩欐槸鎶婂畠浠庨椤电Щ璧扮殑鐞嗙敱銆?
--->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/pageSettings"
-    style="@style/PageScroll">
-
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/pageSettings" style="@style/PageScroll">
     <LinearLayout style="@style/PageColumn">
+        <Space android:layout_width="match_parent" android:layout_height="@dimen/sp_3xl" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tab_settings" style="@style/TextDisplay" />
+        <TextView android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="@dimen/sp_lg" android:background="@drawable/field_glass" android:gravity="center_vertical" android:paddingStart="@dimen/sp_lg" android:text="⌕   搜索设置" android:textColor="@color/ink_tertiary" android:textSize="@dimen/t_body" />
 
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/sp_3xl" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tab_settings"
-            style="@style/TextDisplay" />
-
-        <!-- 鈺愨晲鈺?鏉冮檺 鈺愨晲鈺?-->
-        <LinearLayout
-            android:layout_marginTop="@dimen/sp_2xl"
-            style="@style/CardGlass">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/sp_md"
-                android:text="@string/sec_permission"
-                style="@style/TextTitle" />
-
-            <!-- 閫氱煡璇诲彇鏉冮檺 -->
-            <LinearLayout style="@style/InfoRow">
-
-                <View
-                    android:id="@+id/dotNotifAccess"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:layout_marginEnd="@dimen/sp_md"
-                    android:background="@drawable/dot" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/perm_notif_access"
-                        style="@style/TextBody" />
-
-                    <TextView
-                        android:id="@+id/tvListener"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/perm_checking"
-                        style="@style/TextCaption" />
+        <LinearLayout android:layout_marginTop="@dimen/sp_lg" style="@style/CardGlass">
+            <LinearLayout android:id="@+id/btnAbout" android:layout_width="match_parent" android:layout_height="76dp" android:background="@drawable/row_glass" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="@dimen/sp_lg" android:paddingEnd="@dimen/sp_lg">
+                <TextView android:layout_width="44dp" android:layout_height="44dp" android:background="@drawable/avatar_sakura" android:gravity="center" android:text="S" android:textColor="@android:color/white" android:textStyle="bold" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SakuraGu" style="@style/TextBody" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="UniLink · 关于我们" style="@style/TextCaption" />
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnAccess"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/sp_md"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="@string/btn_grant"
-                    android:textColor="@color/ac_primary"
-                    style="@style/TextBody" />
-            </LinearLayout>
-
-            <!-- 寮瑰嚭閫氱煡鏉冮檺 -->
-            <LinearLayout
-                android:layout_marginTop="@dimen/sp_sm"
-                style="@style/InfoRow">
-
-                <View
-                    android:id="@+id/dotNotifPost"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:layout_marginEnd="@dimen/sp_md"
-                    android:background="@drawable/dot" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/perm_notif_post"
-                        style="@style/TextBody" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/perm_notif_post_hint"
-                        style="@style/TextCaption" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnPerm"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/sp_md"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="@string/btn_grant"
-                    android:textColor="@color/ac_primary"
-                    style="@style/TextBody" />
-            </LinearLayout>
-
-            <!-- 鏃犻殰纰嶈嚜鍔ㄥ洖澶?-->
-            <LinearLayout
-                android:layout_marginTop="@dimen/sp_sm"
-                style="@style/InfoRow">
-
-                <View
-                    android:id="@+id/dotA11y"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:layout_marginEnd="@dimen/sp_md"
-                    android:background="@drawable/dot" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/perm_a11y"
-                        style="@style/TextBody" />
-
-                    <TextView
-                        android:id="@+id/tvA11y"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/perm_a11y_hint"
-                        style="@style/TextCaption" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnA11y"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/sp_md"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="@string/btn_grant"
-                    android:textColor="@color/ac_primary"
-                    style="@style/TextBody" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 鈺愨晲鈺?鍏充簬 鈺愨晲鈺?-->
-        <LinearLayout
-            android:layout_marginTop="@dimen/card_gap"
-            style="@style/CardGlass">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="权限与隐私" style="@style/TextLabel" />
+        <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
+            <LinearLayout style="@style/InfoRow">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/icon_tile" android:gravity="center" android:text="◌" android:textColor="@color/ac_primary" android:textSize="20sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/perm_notif_access" style="@style/TextBody" />
+                    <TextView android:id="@+id/tvListener" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/perm_checking" style="@style/TextCaption" />
+                </LinearLayout>
+                <View android:id="@+id/dotNotifAccess" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/sp_md" android:background="@drawable/dot" />
+                <TextView android:id="@+id/btnAccess" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/InfoRow">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/icon_tile" android:gravity="center" android:text="◉" android:textColor="@color/ac_primary" android:textSize="18sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/perm_notif_post" style="@style/TextBody" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/perm_notif_post_hint" style="@style/TextCaption" />
+                </LinearLayout>
+                <View android:id="@+id/dotNotifPost" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/sp_md" android:background="@drawable/dot" />
+                <TextView android:id="@+id/btnPerm" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/InfoRow">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/icon_tile" android:gravity="center" android:text="⌁" android:textColor="@color/ac_primary" android:textSize="22sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/perm_a11y" style="@style/TextBody" />
+                    <TextView android:id="@+id/tvA11y" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/perm_a11y_hint" style="@style/TextCaption" />
+                </LinearLayout>
+                <View android:id="@+id/dotA11y" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/sp_md" android:background="@drawable/dot" />
+                <TextView android:id="@+id/btnA11y" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+            </LinearLayout>
+        </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/sec_about"
-                style="@style/TextTitle" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:text="@string/about_body"
-                style="@style/TextLabel" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="应用信息" style="@style/TextLabel" />
+        <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
+            <LinearLayout android:id="@+id/btnAboutBottom" android:layout_width="match_parent" android:layout_height="60dp" android:background="@drawable/row_glass" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="@dimen/sp_lg" android:paddingEnd="@dimen/sp_lg">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="关于 UniLink" style="@style/TextBody" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

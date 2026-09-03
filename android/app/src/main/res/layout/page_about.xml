@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pageAbout"
+    style="@style/PageScroll">
+
+    <LinearLayout style="@style/PageColumn">
+        <Space android:layout_width="match_parent" android:layout_height="@dimen/sp_2xl" />
+
+        <TextView
+            android:id="@+id/btnAboutBack"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:background="@drawable/status_island"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="@dimen/sp_lg"
+            android:paddingEnd="@dimen/sp_lg"
+            android:text="‹  返回设置"
+            android:textColor="@color/ac_primary"
+            android:textSize="@dimen/t_body" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sp_2xl"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@drawable/avatar_sakura"
+                android:gravity="center"
+                android:text="S"
+                android:textColor="@android:color/white"
+                android:textSize="36sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_lg"
+                android:text="UniLink"
+                style="@style/TextDisplay" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_xs"
+                android:text="让设备之间，自然流动"
+                style="@style/TextLabel" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_2xl"
+            style="@style/CardGlass">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="关于我们" style="@style/TextTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_md"
+                android:text="UniLink 是一款让手机和电脑轻松协作的互联工具。通知、剪贴板与文件，在你授权后安全流转。"
+                style="@style/TextLabel" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="@dimen/sp_lg"
+                android:background="@drawable/row_glass"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/sp_lg"
+                android:paddingEnd="@dimen/sp_lg">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="作者" style="@style/TextBody" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SakuraGu" style="@style/TextLabel" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnWebsite"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:background="@drawable/row_glass"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/sp_lg"
+                android:paddingEnd="@dimen/sp_lg"
+                android:text="官方网站                              ›"
+                android:textColor="@color/ac_primary"
+                android:textSize="@dimen/t_body" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

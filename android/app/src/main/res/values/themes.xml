@@ -156,7 +156,7 @@
         <item name="android:layout_weight">1</item>
         <item name="android:layout_marginTop">@dimen/sp_sm</item>
         <item name="android:layout_marginBottom">@dimen/sp_sm</item>
-        <item name="android:background">@drawable/dock_item</item>
+        <item name="android:background">@color/transparent</item>
         <item name="android:orientation">vertical</item>
         <item name="android:gravity">center</item>
         <item name="android:clickable">true</item>

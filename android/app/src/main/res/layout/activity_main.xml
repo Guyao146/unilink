@@ -27,10 +27,12 @@
         <include layout="@layout/page_sync" />
 
         <include layout="@layout/page_settings" />
+
+        <include layout="@layout/page_about" />
     </FrameLayout>
 
     <!-- ═══════════ 悬浮 Dock ═══════════ -->
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/dock"
         android:layout_width="match_parent"
         android:layout_height="@dimen/h_dock"
@@ -40,9 +42,20 @@
         android:layout_marginBottom="@dimen/sp_2xl"
         android:background="@drawable/dock_glass"
         android:elevation="8dp"
-        android:orientation="horizontal"
         android:paddingStart="@dimen/sp_sm"
         android:paddingEnd="@dimen/sp_sm">
+
+        <View
+            android:id="@+id/dockIndicator"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical|start"
+            android:background="@drawable/dock_item" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
 
         <LinearLayout
             android:id="@+id/tabHome"
@@ -115,5 +128,6 @@
                 android:text="@string/tab_settings"
                 android:textSize="@dimen/t_dock" />
         </LinearLayout>
-    </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 </FrameLayout>

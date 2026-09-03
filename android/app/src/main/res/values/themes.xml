@@ -17,7 +17,8 @@
         <!-- 状态栏与导航栏透明：让环境层渐变延伸到屏幕边缘 -->
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:navigationBarColor">@color/transparent</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
     <style name="Theme.UniLink.Invisible" parent="android:Theme.Material.NoActionBar">
@@ -39,6 +40,7 @@
         <item name="android:textColor">@color/ink_primary</item>
         <item name="android:letterSpacing">-0.03</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif</item>
     </style>
 
     <style name="TextHero">
@@ -46,6 +48,7 @@
         <item name="android:textColor">@color/ink_primary</item>
         <item name="android:letterSpacing">-0.02</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif</item>
     </style>
 
     <style name="TextTitle">
@@ -53,6 +56,7 @@
         <item name="android:textColor">@color/ink_primary</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">-0.01</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
     <style name="TextBody">

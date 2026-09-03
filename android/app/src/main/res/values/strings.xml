@@ -13,7 +13,12 @@
     <!-- ── 首页 ── -->
     <string name="status_idle">未连接</string>
     <string name="status_idle_hint">填好连接信息后点下方按钮，手机与电脑即可互通消息、通知与文件。</string>
+    <string name="home_eyebrow">设备互联</string>
+    <string name="home_greeting">让设备之间，自然流动</string>
+    <string name="home_status_label">连接状态</string>
+    <string name="home_status_caption">安全连接 · 端到端加密</string>
     <string name="sec_quick">快捷操作</string>
+    <string name="quick_hint">常用操作会显示在这里</string>
     <string name="btn_start">连接并保持后台</string>
     <string name="btn_stop">断开连接</string>
     <string name="btn_share_clip">发送剪贴板到电脑</string>

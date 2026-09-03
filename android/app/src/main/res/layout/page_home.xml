@@ -21,20 +21,56 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/app_name"
+            android:text="@string/home_eyebrow"
+            android:textColor="@color/ac_primary"
+            android:textStyle="bold"
+            android:textSize="@dimen/t_label" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sp_sm"
+            android:text="@string/home_greeting"
             style="@style/TextDisplay" />
 
         <!-- ═══ 状态卡：整页的主角 ═══ -->
         <LinearLayout
-            android:layout_marginTop="@dimen/sp_2xl"
+            android:layout_marginTop="@dimen/sp_xl"
             android:paddingTop="@dimen/sp_2xl"
             android:paddingBottom="@dimen/sp_2xl"
             style="@style/CardGlass">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/home_status_label"
+                    style="@style/TextLabel" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/icon_tile"
+                    android:paddingStart="@dimen/sp_md"
+                    android:paddingTop="@dimen/sp_xs"
+                    android:paddingEnd="@dimen/sp_md"
+                    android:paddingBottom="@dimen/sp_xs"
+                    android:text="@string/home_status_caption"
+                    android:textColor="@color/ac_primary"
+                    android:textSize="@dimen/t_caption" />
+            </LinearLayout>
+
             <!-- 状态圆点 + 大字 -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_lg"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -82,9 +118,16 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/sp_md"
                 android:text="@string/sec_quick"
                 style="@style/TextTitle" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_xs"
+                android:layout_marginBottom="@dimen/sp_lg"
+                android:text="@string/quick_hint"
+                style="@style/TextLabel" />
 
             <Button
                 android:id="@+id/btnShareClip"

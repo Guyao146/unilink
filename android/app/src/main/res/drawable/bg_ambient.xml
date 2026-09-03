@@ -11,7 +11,7 @@
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 基础渐变：自上而下深 → 亮 → 深 -->
+    <!-- 淡蓝环境底色，让玻璃卡片随位置产生不同冷暖。 -->
     <item>
         <shape android:shape="rectangle">
             <gradient
@@ -23,12 +23,12 @@
         </shape>
     </item>
 
-    <!-- 青色光斑：左上，覆盖标题与首张卡片 -->
+    <!-- 蓝色晨光：左上，覆盖标题与首张卡片 -->
     <item
-        android:bottom="420dp"
-        android:left="-200dp"
-        android:right="60dp"
-        android:top="-220dp">
+        android:bottom="400dp"
+        android:left="-180dp"
+        android:right="40dp"
+        android:top="-180dp">
         <shape android:shape="oval">
             <gradient
                 android:centerX="0.5"
@@ -40,7 +40,7 @@
         </shape>
     </item>
 
-    <!-- 紫色光斑：右下，与青色形成冷暖对角 -->
+    <!-- 淡紫光斑：右下，制造柔和的空间层次 -->
     <item
         android:bottom="-260dp"
         android:left="80dp"

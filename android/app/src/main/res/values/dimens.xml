@@ -14,10 +14,10 @@
 <resources>
 
     <!-- ── 圆角（同心阶梯）── -->
-    <dimen name="r_sheet">32dp</dimen>
-    <dimen name="r_card">26dp</dimen>
-    <dimen name="r_row">20dp</dimen>
-    <dimen name="r_control">18dp</dimen>
+    <dimen name="r_sheet">30dp</dimen>
+    <dimen name="r_card">28dp</dimen>
+    <dimen name="r_row">18dp</dimen>
+    <dimen name="r_control">16dp</dimen>
     <dimen name="r_icon">14dp</dimen>
     <dimen name="r_inner">12dp</dimen>
     <dimen name="r_pill">999dp</dimen>
@@ -31,8 +31,8 @@
     <dimen name="sp_2xl">28dp</dimen>
     <dimen name="sp_3xl">40dp</dimen>
 
-    <dimen name="gutter">20dp</dimen>
-    <dimen name="card_pad">20dp</dimen>
+    <dimen name="gutter">18dp</dimen>
+    <dimen name="card_pad">18dp</dimen>
     <dimen name="card_gap">16dp</dimen>
 
     <!-- 页面底部留白：给悬浮 Dock 让出空间 -->
@@ -51,8 +51,8 @@
     <!-- ── 字号 ──
          字阶跨度拉大：34 / 28 / 20 / 15 / 13 / 11。
          层级靠尺寸差而非细微区分 -->
-    <dimen name="t_display">34sp</dimen>
-    <dimen name="t_hero">28sp</dimen>
+    <dimen name="t_display">32sp</dimen>
+    <dimen name="t_hero">30sp</dimen>
     <dimen name="t_title">20sp</dimen>
     <dimen name="t_body">15sp</dimen>
     <dimen name="t_label">13sp</dimen>

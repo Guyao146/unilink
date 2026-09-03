@@ -4,9 +4,9 @@
     <!--
       基础主题
       ========
-      刻意保留平台 Material 主题作为父级（不引入 MaterialComponents）：
-      本项目的视觉全部由自绘 drawable 承载，用平台主题可避免
-      Material 组件的默认样式（涟漪色、控件内边距）与之打架。
+      保留平台 Material 主题作为父级（不引入 MaterialComponents）：
+      视觉全部由自绘 drawable 承载，用平台主题可避免
+      Material 组件默认样式（涟漪色、控件内边距）与之打架。
     -->
     <style name="Theme.UniLink" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_ambient</item>
@@ -14,18 +14,12 @@
         <item name="android:textColorPrimary">@color/ink_primary</item>
         <item name="android:textColorSecondary">@color/ink_secondary</item>
         <item name="android:textColorHint">@color/ink_tertiary</item>
-        <!-- 状态栏与导航栏透明：让环境层渐变延伸到屏幕边缘。
-             有色状态栏会把玻璃层"切断"，沉浸感随之消失 -->
+        <!-- 状态栏与导航栏透明：让环境层渐变延伸到屏幕边缘 -->
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:navigationBarColor">@color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <!--
-      登录 / 扫码 Activity 的透明主题。
-      这两个 Activity 没有自己的界面（只跳浏览器、开扫码器、弹确认框），
-      做成全透明后视觉上像是从主界面直接浮出的对话框。
-    -->
     <style name="Theme.UniLink.Invisible" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
@@ -36,24 +30,21 @@
 
     <!-- ══════════════ 文字 ══════════════
 
-         样式名刻意不用点号分段（如 T.Display）：Android 会把点号前的部分
-         当作**隐式父样式**去查找，父样式不存在时 AAPT2 直接报
-         "No resource found that matches the given name"。
-         需要继承时一律写显式 parent。
+         样式名不用点号分段：Android 会把点号前的部分当作隐式父样式，
+         父样式不存在时 AAPT2 直接报错。需要继承时写显式 parent。
     -->
 
     <style name="TextDisplay">
         <item name="android:textSize">@dimen/t_display</item>
         <item name="android:textColor">@color/ink_primary</item>
-        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:letterSpacing">-0.03</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- 卡片小标题：字距放宽，作为分区标识而非阅读内容 -->
-    <style name="TextSection">
-        <item name="android:textSize">@dimen/t_caption</item>
-        <item name="android:textColor">@color/ac_primary</item>
-        <item name="android:letterSpacing">0.14</item>
+    <style name="TextHero">
+        <item name="android:textSize">@dimen/t_hero</item>
+        <item name="android:textColor">@color/ink_primary</item>
+        <item name="android:letterSpacing">-0.02</item>
         <item name="android:textStyle">bold</item>
     </style>
 
@@ -61,6 +52,7 @@
         <item name="android:textSize">@dimen/t_title</item>
         <item name="android:textColor">@color/ink_primary</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.01</item>
     </style>
 
     <style name="TextBody">
@@ -71,7 +63,7 @@
     <style name="TextLabel">
         <item name="android:textSize">@dimen/t_label</item>
         <item name="android:textColor">@color/ink_secondary</item>
-        <item name="android:lineSpacingMultiplier">1.25</item>
+        <item name="android:lineSpacingMultiplier">1.3</item>
     </style>
 
     <style name="TextCaption">
@@ -83,18 +75,20 @@
 
     <style name="FieldGlass">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">@dimen/h_field</item>
+        <item name="android:layout_height">@dimen/h_control</item>
         <item name="android:background">@drawable/field_glass</item>
-        <item name="android:paddingStart">@dimen/sp_md</item>
-        <item name="android:paddingEnd">@dimen/sp_md</item>
+        <item name="android:paddingStart">@dimen/sp_lg</item>
+        <item name="android:paddingEnd">@dimen/sp_lg</item>
         <item name="android:textSize">@dimen/t_body</item>
         <item name="android:textColor">@color/ink_primary</item>
         <item name="android:textColorHint">@color/ink_tertiary</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center_vertical</item>
+        <item name="android:importantForAutofill">no</item>
     </style>
 
     <style name="BtnPrimary">
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/h_control</item>
         <item name="android:background">@drawable/btn_primary</item>
         <item name="android:textColor">@color/ink_on_accent</item>
@@ -105,6 +99,7 @@
     </style>
 
     <style name="BtnGlass">
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/h_control</item>
         <item name="android:background">@drawable/btn_glass</item>
         <item name="android:textColor">@color/ink_primary</item>
@@ -113,18 +108,15 @@
         <item name="android:stateListAnimator">@null</item>
     </style>
 
-    <style name="BtnGlassSmall" parent="BtnGlass">
-        <item name="android:layout_height">@dimen/h_control_sm</item>
-        <item name="android:textSize">@dimen/t_label</item>
-    </style>
-
+    <!-- 开关行：整行 60dp，文字在左、开关在右 -->
     <style name="SwitchRow">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:minHeight">44dp</item>
+        <item name="android:layout_height">@dimen/h_row</item>
+        <item name="android:background">@drawable/row_glass</item>
+        <item name="android:paddingStart">@dimen/sp_lg</item>
+        <item name="android:paddingEnd">@dimen/sp_md</item>
         <item name="android:textSize">@dimen/t_body</item>
         <item name="android:textColor">@color/ink_primary</item>
-        <item name="android:background">@null</item>
     </style>
 
     <!-- 玻璃卡片容器 -->
@@ -132,9 +124,52 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/glass_card</item>
-        <item name="android:padding">@dimen/sp_lg</item>
+        <item name="android:padding">@dimen/card_pad</item>
         <item name="android:orientation">vertical</item>
     </style>
+
+    <!-- 页面根滚动视图：底部留出 Dock 空间 -->
+    <style name="PageScroll">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="android:scrollbars">none</item>
+        <item name="android:paddingStart">@dimen/gutter</item>
+        <item name="android:paddingEnd">@dimen/gutter</item>
+        <item name="android:paddingBottom">@dimen/dock_clearance</item>
+    </style>
+
+    <style name="PageColumn">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <!-- Dock 项：等分宽度，图标在上文字在下 -->
+    <style name="DockItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginTop">@dimen/sp_sm</item>
+        <item name="android:layout_marginBottom">@dimen/sp_sm</item>
+        <item name="android:background">@drawable/dock_item</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:gravity">center</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!-- 卡片内的信息行：图标底板 + 主副文字 -->
+    <style name="InfoRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/h_row</item>
+        <item name="android:background">@drawable/row_glass</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">@dimen/sp_lg</item>
+        <item name="android:paddingEnd">@dimen/sp_lg</item>
+        <item name="android:paddingTop">@dimen/sp_md</item>
+        <item name="android:paddingBottom">@dimen/sp_md</item>
+    </style>
 </resources>
-
-

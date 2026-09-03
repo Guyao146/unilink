@@ -2,39 +2,57 @@
 <!--
   环境层背景
   ==========
-  三段线性渐变 + 顶部一团弥散光斑。
+  基础渐变 + 两团彩色光斑（青在左上、紫在右下）。
 
-  这一层是整套玻璃材质的"折射对象"：玻璃卡片本身几乎是透明的，
-  用户看到的层次感全部来自它下面这层环境色的明暗变化。
-  所以环境层不能是纯色 —— 纯色背景上的玻璃会退化成一块灰片。
+  这一层是所有玻璃的"折射对象"。上一版失败的直接原因就是这里太暗太平：
+  纯深灰蓝背景上的半透明白，看起来只是一块灰片。
+  加入彩色光斑后，同一张玻璃卡片在屏幕不同位置折射出不同色温 ——
+  这正是澎湃"感知环境色，自然融合"的实现原理。
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 基础渐变：自上而下由深到略亮再收暗，模拟自然光衰减 -->
+    <!-- 基础渐变：自上而下深 → 亮 → 深 -->
     <item>
         <shape android:shape="rectangle">
             <gradient
                 android:angle="270"
-                android:startColor="@color/amb_top"
                 android:centerColor="@color/amb_mid"
                 android:endColor="@color/amb_bottom"
+                android:startColor="@color/amb_top"
                 android:type="linear" />
         </shape>
     </item>
 
-    <!-- 光斑：偏上方的径向辉光，让顶部的玻璃卡片有可折射的亮部 -->
+    <!-- 青色光斑：左上，覆盖标题与首张卡片 -->
     <item
-        android:bottom="240dp"
-        android:left="-120dp"
-        android:right="-40dp"
-        android:top="-180dp">
+        android:bottom="420dp"
+        android:left="-200dp"
+        android:right="60dp"
+        android:top="-220dp">
         <shape android:shape="oval">
             <gradient
                 android:centerX="0.5"
                 android:centerY="0.5"
-                android:endColor="@color/amb_glow_fade"
-                android:gradientRadius="60%"
-                android:startColor="@color/amb_glow"
+                android:endColor="@color/amb_glow_cyan_out"
+                android:gradientRadius="55%"
+                android:startColor="@color/amb_glow_cyan"
+                android:type="radial" />
+        </shape>
+    </item>
+
+    <!-- 紫色光斑：右下，与青色形成冷暖对角 -->
+    <item
+        android:bottom="-260dp"
+        android:left="80dp"
+        android:right="-180dp"
+        android:top="380dp">
+        <shape android:shape="oval">
+            <gradient
+                android:centerX="0.5"
+                android:centerY="0.5"
+                android:endColor="@color/amb_glow_violet_out"
+                android:gradientRadius="55%"
+                android:startColor="@color/amb_glow_violet"
                 android:type="radial" />
         </shape>
     </item>

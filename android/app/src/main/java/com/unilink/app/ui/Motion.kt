@@ -3,7 +3,6 @@ package com.unilink.app.ui
 import android.animation.ValueAnimator
 import android.view.View
 import android.view.animation.PathInterpolator
-import android.widget.Button
 import android.widget.TextView
 
 /**
@@ -59,7 +58,7 @@ object Motion {
             .start()
     }
 
-    /** 批量给一组按钮加按压响应 */
+    /** 批量给一组视图加按压响应 */
     fun pressAll(vararg views: View) = views.forEach { press(it) }
 
     /**
@@ -96,9 +95,9 @@ object Motion {
     }
 
     /** 按钮文字在启用/禁用间的透明度过渡 */
-    fun fadeEnabled(btn: Button, enabled: Boolean) {
-        btn.isEnabled = enabled
-        btn.animate()
+    fun fadeEnabled(view: View, enabled: Boolean) {
+        view.isEnabled = enabled
+        view.animate()
             .alpha(if (enabled) 1f else 0.4f)
             .setDuration(200L)
             .setInterpolator(SMOOTH)

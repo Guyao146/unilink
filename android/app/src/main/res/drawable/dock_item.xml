@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dock 项目的选中态
+  =================
+  选中时浮起一块着色胶囊。用 selector 而非代码改背景，
+  这样按下与选中两种状态能各自独立表达。
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_icon" />
+            <solid android:color="@color/ac_primary_wash" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_icon" />
+            <solid android:color="@color/transparent" />
+        </shape>
+    </item>
+</selector>

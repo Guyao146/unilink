@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  页面 2 · 连接
+  =============
+  账号（扫码登录）与中继服务器两件事，各一张卡。
+  输入框之间给足 12dp 间距 —— 上一版挤在一起是密度过高的元凶之一。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pageLink"
+    style="@style/PageScroll">
+
+    <LinearLayout style="@style/PageColumn">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/sp_3xl" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tab_link"
+            style="@style/TextDisplay" />
+
+        <!-- ═══ authentik 账号 ═══ -->
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_2xl"
+            style="@style/CardGlass">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_account"
+                style="@style/TextTitle" />
+
+            <TextView
+                android:id="@+id/tvAuth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/login_none"
+                style="@style/TextLabel" />
+
+            <EditText
+                android:id="@+id/etQrServer"
+                android:layout_marginTop="@dimen/sp_lg"
+                android:hint="@string/hint_qr_server"
+                android:inputType="textUri"
+                style="@style/FieldGlass" />
+
+            <Button
+                android:id="@+id/btnLogin"
+                android:layout_marginTop="@dimen/sp_md"
+                android:text="@string/btn_login"
+                style="@style/BtnPrimary" />
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/btn_logout"
+                style="@style/BtnGlass" />
+        </LinearLayout>
+
+        <!-- ═══ 中继服务器 ═══ -->
+        <LinearLayout
+            android:layout_marginTop="@dimen/card_gap"
+            style="@style/CardGlass">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_relay"
+                style="@style/TextTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:text="@string/sec_relay_hint"
+                style="@style/TextLabel" />
+
+            <EditText
+                android:id="@+id/etServer"
+                android:layout_marginTop="@dimen/sp_lg"
+                android:hint="@string/hint_server"
+                android:inputType="textUri"
+                style="@style/FieldGlass" />
+
+            <EditText
+                android:id="@+id/etRoom"
+                android:layout_marginTop="@dimen/sp_md"
+                android:hint="@string/hint_room"
+                android:inputType="text"
+                style="@style/FieldGlass" />
+
+            <EditText
+                android:id="@+id/etToken"
+                android:layout_marginTop="@dimen/sp_md"
+                android:hint="@string/hint_token"
+                android:inputType="textPassword"
+                style="@style/FieldGlass" />
+
+            <EditText
+                android:id="@+id/etName"
+                android:layout_marginTop="@dimen/sp_md"
+                android:hint="@string/hint_device"
+                android:inputType="text"
+                style="@style/FieldGlass" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

@@ -4,41 +4,56 @@
     <string name="a11y_label">UniLink 自动回复</string>
     <string name="a11y_desc">用于“在电脑上回复手机通知”：自动定位目标通知、填写回复内容并发送。UniLink 不会读取或上传屏幕上其它内容。</string>
 
-    <!-- ── 分区标题 ── -->
-    <string name="sec_account">账号 · AUTHENTIK</string>
-    <string name="sec_connection">连接 · RELAY</string>
-    <string name="sec_sync">同步 · SYNC</string>
-    <string name="sec_permission">权限 · ACCESS</string>
-    <string name="sec_activity">动态 · ACTIVITY</string>
+    <!-- ── Dock ── -->
+    <string name="tab_home">首页</string>
+    <string name="tab_link">连接</string>
+    <string name="tab_sync">同步</string>
+    <string name="tab_settings">设置</string>
 
-    <!-- ── 扫码登录 ── -->
-    <string name="login_none">未登录 —— 登录后可用手机扫码登录所有接入 authentik 的项目</string>
-    <string name="scan_prompt">对准电脑屏幕上的登录二维码</string>
+    <!-- ── 首页 ── -->
+    <string name="status_idle">未连接</string>
+    <string name="status_idle_hint">填好连接信息后点下方按钮，手机与电脑即可互通消息、通知与文件。</string>
+    <string name="sec_quick">快捷操作</string>
+    <string name="btn_start">连接并保持后台</string>
+    <string name="btn_stop">断开连接</string>
+    <string name="btn_share_clip">发送剪贴板到电脑</string>
+    <string name="btn_scan">扫码登录网页</string>
+
+    <!-- ── 连接页 ── -->
+    <string name="sec_account">authentik 账号</string>
+    <string name="login_none">未登录。登录后可用手机扫码登录所有接入 authentik 的项目。</string>
     <string name="hint_qr_server">扫码服务地址，如 https://gateway.example.com</string>
     <string name="btn_login">登录 authentik</string>
-    <string name="btn_scan">扫码登录</string>
     <string name="btn_logout">退出登录</string>
 
-    <!-- ── 连接 ── -->
-    <string name="hint_server">中继服务器，如 ws://192.168.1.100:8765/ws</string>
+    <string name="sec_relay">中继服务器</string>
+    <string name="sec_relay_hint">手机与电脑通过它转发消息。两端的房间码与令牌必须一致。</string>
+    <string name="hint_server">服务器地址，如 ws://192.168.1.100:8765/ws</string>
     <string name="hint_room">房间码</string>
     <string name="hint_token">访问令牌</string>
     <string name="hint_device">设备名（显示在电脑端）</string>
-    <string name="btn_start">连接并保持后台</string>
-    <string name="btn_stop">断开连接</string>
 
-    <!-- ── 同步 ── -->
-    <string name="sw_mirror">状态栏通知同步给电脑</string>
-    <string name="sw_recv_notify">接收电脑的消息与通知</string>
-    <string name="sw_recv_clip">自动接收电脑剪贴板</string>
-    <string name="btn_share_clip">发送剪贴板到电脑</string>
-
-    <!-- ── 权限 ── -->
-    <string name="perm_checking">权限状态检测中…</string>
-    <string name="btn_notif_access">通知使用权</string>
-    <string name="btn_notif_post">弹出通知</string>
-    <string name="btn_a11y">开启无障碍（电脑回复自动发送）</string>
-
-    <!-- ── 日志 ── -->
+    <!-- ── 同步页 ── -->
+    <string name="sec_sync_what">同步内容</string>
+    <string name="sw_mirror">通知同步给电脑</string>
+    <string name="sw_recv_notify">接收电脑的通知</string>
+    <string name="sw_recv_clip">自动接收剪贴板</string>
+    <string name="sec_activity">活动日志</string>
     <string name="btn_clear">清空</string>
+
+    <!-- ── 设置页 ── -->
+    <string name="sec_permission">权限</string>
+    <string name="perm_checking">检测中…</string>
+    <string name="perm_notif_access">通知读取</string>
+    <string name="perm_notif_post">弹出通知</string>
+    <string name="perm_notif_post_hint">接收电脑消息时提醒你</string>
+    <string name="perm_a11y">无障碍自动回复</string>
+    <string name="perm_a11y_hint">可选，在电脑上回复时自动发送</string>
+    <string name="btn_grant">授予</string>
+
+    <string name="sec_about">关于</string>
+    <string name="about_body">UniLink · 手机与电脑互联助手\n通知镜像 / 剪贴板 / 文件传输 / 扫码登录\n端到端 AES-256-GCM 加密，服务器只转发密文。</string>
+
+    <!-- ── 扫码 ── -->
+    <string name="scan_prompt">对准电脑屏幕上的登录二维码</string>
 </resources>

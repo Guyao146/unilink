@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dock 图标 · 设置：滑块 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,6h6v2H3zM14,6h7v2h-7z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,7a2.6,2.6 0 1,0 5.2,0a2.6,2.6 0 1,0 -5.2,0z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,16h7v2H3zM15,16h6v2h-6z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,17a2.6,2.6 0 1,0 5.2,0a2.6,2.6 0 1,0 -5.2,0z" />
+</vector>

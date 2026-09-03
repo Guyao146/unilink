@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  玻璃卡片
-  ========
-  底层渐变描边（顶亮底暗）+ 内缩 1dp 的填充渐变。
-  这一版把描边顶部提到 55% 白、填充提到 18% 白 ——
-  上一版的 25%/12% 在深底上几乎看不见轮廓，卡片糊成一片。
+  悬浮 Dock
+  =========
+  澎湃 4 的"全新悬浮框架"：导航不再是贴底的实心条，
+  而是一块浮在内容之上、四角全圆的玻璃面板。
+  更大的圆角（32dp）与更强的高光边让它明确"离开"页面平面。
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_card" />
+            <corners android:radius="@dimen/r_sheet" />
             <gradient
                 android:angle="270"
                 android:endColor="@color/glass_edge_dark"
@@ -25,12 +25,13 @@
         android:right="@dimen/hairline"
         android:top="@dimen/hairline">
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_card" />
+            <corners android:radius="@dimen/r_sheet" />
             <gradient
                 android:angle="270"
-                android:endColor="@color/glass_fill_bottom"
-                android:startColor="@color/glass_fill_top"
+                android:endColor="@color/dock_fill_bottom"
+                android:startColor="@color/dock_fill_top"
                 android:type="linear" />
         </shape>
     </item>
 </layer-list>
+

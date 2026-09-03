@@ -1,316 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  主界面
-  ======
-  结构：可滚动的玻璃卡片流。
+  主界面骨架
+  ==========
+  内容区（可切换的 4 个页面）+ 悬浮 Dock。
 
-  相比旧版把二十来个控件平铺在一个 LinearLayout 里，这里按"关注点"
-  分成 4 张卡片：账号 / 连接 / 同步 / 权限，日志作为独立区域收在最后。
-  改为滚动而非塞满一屏 —— 内容优先，控件让位。
-
-  所有 id 与旧版完全一致，MainActivity 的 findViewById 无需改动。
+  Dock 覆盖在内容之上，内容区底部靠 PageScroll 的 paddingBottom
+  留出空间 —— 这样滚动时内容会从 Dock 底下穿过去，
+  正是澎湃"悬浮框架，浏览更沉浸"的观感。
 -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:scrollbars="none">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <!-- 页面容器：4 个页面同时存在，靠可见性切换。
+         页面数量少且状态需要保留（输入框内容、日志滚动位置），
+         用 ViewPager + Fragment 反而增加复杂度 -->
+    <FrameLayout
+        android:id="@+id/pageHost"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="@dimen/gutter"
-        android:paddingEnd="@dimen/gutter"
-        android:paddingTop="@dimen/sp_2xl"
-        android:paddingBottom="@dimen/sp_2xl">
+        android:layout_height="match_parent">
 
-        <!-- ═══════════ 顶部：标题 + 状态胶囊 ═══════════ -->
+        <include layout="@layout/page_home" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            style="@style/TextDisplay" />
+        <include layout="@layout/page_link" />
 
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/sp_sm"
-            android:background="@drawable/pill_status"
-            android:paddingStart="@dimen/sp_md"
-            android:paddingEnd="@dimen/sp_md"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:text="未启动"
-            style="@style/TextLabel" />
+        <include layout="@layout/page_sync" />
 
-        <!-- ═══════════ 账号（扫码登录）═══════════ -->
+        <include layout="@layout/page_settings" />
+    </FrameLayout>
+
+    <!-- ═══════════ 悬浮 Dock ═══════════ -->
+    <LinearLayout
+        android:id="@+id/dock"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/h_dock"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="@dimen/gutter"
+        android:layout_marginEnd="@dimen/gutter"
+        android:layout_marginBottom="@dimen/sp_2xl"
+        android:background="@drawable/dock_glass"
+        android:elevation="8dp"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/sp_sm"
+        android:paddingEnd="@dimen/sp_sm">
 
         <LinearLayout
-            android:layout_marginTop="@dimen/sp_xl"
-            style="@style/CardGlass">
+            android:id="@+id/tabHome"
+            style="@style/DockItem">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@string/tab_home"
+                android:src="@drawable/ic_tab_home" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sec_account"
-                style="@style/TextSection" />
-
-            <TextView
-                android:id="@+id/tvAuth"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:text="@string/login_none"
-                style="@style/TextLabel" />
-
-            <EditText
-                android:id="@+id/etQrServer"
-                android:layout_marginTop="@dimen/sp_md"
-                android:hint="@string/hint_qr_server"
-                android:importantForAutofill="no"
-                android:inputType="textUri"
-                style="@style/FieldGlass" />
-
-            <Button
-                android:id="@+id/btnLogin"
-                android:layout_width="match_parent"
-                android:layout_marginTop="@dimen/sp_md"
-                android:text="@string/btn_login"
-                style="@style/BtnPrimary" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btnScanLogin"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:text="@string/btn_scan"
-                    style="@style/BtnGlass" />
-
-                <Button
-                    android:id="@+id/btnLogout"
-                    android:layout_width="0dp"
-                    android:layout_marginStart="@dimen/sp_sm"
-                    android:layout_weight="1"
-                    android:text="@string/btn_logout"
-                    style="@style/BtnGlass" />
-            </LinearLayout>
+                android:layout_marginTop="3dp"
+                android:text="@string/tab_home"
+                android:textSize="@dimen/t_dock" />
         </LinearLayout>
 
-
-        <!-- ═══════════ 连接 ═══════════ -->
-
         <LinearLayout
-            android:layout_marginTop="@dimen/sp_md"
-            style="@style/CardGlass">
+            android:id="@+id/tabLink"
+            style="@style/DockItem">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@string/tab_link"
+                android:src="@drawable/ic_tab_scan" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sec_connection"
-                style="@style/TextSection" />
-
-            <EditText
-                android:id="@+id/etServer"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:hint="@string/hint_server"
-                android:importantForAutofill="no"
-                android:inputType="textUri"
-                style="@style/FieldGlass" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/etRoom"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:hint="@string/hint_room"
-                    android:importantForAutofill="no"
-                    android:inputType="text"
-                    style="@style/FieldGlass" />
-
-                <EditText
-                    android:id="@+id/etToken"
-                    android:layout_width="0dp"
-                    android:layout_marginStart="@dimen/sp_sm"
-                    android:layout_weight="1"
-                    android:hint="@string/hint_token"
-                    android:importantForAutofill="no"
-                    android:inputType="textPassword"
-                    style="@style/FieldGlass" />
-            </LinearLayout>
-
-            <EditText
-                android:id="@+id/etName"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:hint="@string/hint_device"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                style="@style/FieldGlass" />
-
-            <Button
-                android:id="@+id/btnStart"
-                android:layout_width="match_parent"
-                android:layout_marginTop="@dimen/sp_md"
-                android:text="@string/btn_start"
-                style="@style/BtnPrimary" />
-
-            <Button
-                android:id="@+id/btnStop"
-                android:layout_width="match_parent"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:text="@string/btn_stop"
-                style="@style/BtnGlass" />
+                android:layout_marginTop="3dp"
+                android:text="@string/tab_link"
+                android:textSize="@dimen/t_dock" />
         </LinearLayout>
 
-        <!-- ═══════════ 同步开关 ═══════════ -->
-
         <LinearLayout
-            android:layout_marginTop="@dimen/sp_md"
-            style="@style/CardGlass">
+            android:id="@+id/tabSync"
+            style="@style/DockItem">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@string/tab_sync"
+                android:src="@drawable/ic_tab_sync" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sec_sync"
-                style="@style/TextSection" />
-
-            <Switch
-                android:id="@+id/swMirror"
-                android:layout_marginTop="@dimen/sp_xs"
-                android:text="@string/sw_mirror"
-                style="@style/SwitchRow" />
-
-            <Switch
-                android:id="@+id/swRecvNotify"
-                android:text="@string/sw_recv_notify"
-                style="@style/SwitchRow" />
-
-            <Switch
-                android:id="@+id/swRecvClip"
-                android:text="@string/sw_recv_clip"
-                style="@style/SwitchRow" />
-
-            <Button
-                android:id="@+id/btnShareClip"
-                android:layout_width="match_parent"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:text="@string/btn_share_clip"
-                style="@style/BtnGlass" />
+                android:layout_marginTop="3dp"
+                android:text="@string/tab_sync"
+                android:textSize="@dimen/t_dock" />
         </LinearLayout>
 
-        <!-- ═══════════ 权限 ═══════════ -->
-
         <LinearLayout
-            android:layout_marginTop="@dimen/sp_md"
-            style="@style/CardGlass">
+            android:id="@+id/tabSettings"
+            style="@style/DockItem">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@string/tab_settings"
+                android:src="@drawable/ic_tab_settings" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sec_permission"
-                style="@style/TextSection" />
-
-            <TextView
-                android:id="@+id/tvListener"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:text="@string/perm_checking"
-                style="@style/TextLabel" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/sp_md"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btnAccess"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:text="@string/btn_notif_access"
-                    style="@style/BtnGlassSmall" />
-
-                <Button
-                    android:id="@+id/btnPerm"
-                    android:layout_width="0dp"
-                    android:layout_marginStart="@dimen/sp_sm"
-                    android:layout_weight="1"
-                    android:text="@string/btn_notif_post"
-                    style="@style/BtnGlassSmall" />
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/btnA11y"
-                android:layout_width="match_parent"
-                android:layout_marginTop="@dimen/sp_sm"
-                android:text="@string/btn_a11y"
-                style="@style/BtnGlassSmall" />
-        </LinearLayout>
-
-        <!-- ═══════════ 日志 ═══════════ -->
-
-        <LinearLayout
-            android:layout_marginTop="@dimen/sp_md"
-            style="@style/CardGlass">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/sec_activity"
-                    style="@style/TextSection" />
-
-                <Button
-                    android:id="@+id/btnClear"
-                    android:layout_width="wrap_content"
-                    android:minWidth="0dp"
-                    android:paddingStart="@dimen/sp_md"
-                    android:paddingEnd="@dimen/sp_md"
-                    android:text="@string/btn_clear"
-                    style="@style/BtnGlassSmall" />
-            </LinearLayout>
-
-            <!-- 日志区固定高度：让它成为一个可滚动的"窗口"，
-                 而不是无限拉长把整页撑开 -->
-            <ScrollView
-                android:id="@+id/svLog"
-                android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:layout_marginTop="@dimen/sp_md"
-                android:background="@drawable/log_surface"
-                android:scrollbars="none">
-
-                <TextView
-                    android:id="@+id/tvLog"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:lineSpacingMultiplier="1.3"
-                    android:padding="@dimen/sp_md"
-                    android:textColor="@color/log_text"
-                    android:textIsSelectable="true"
-                    android:textSize="@dimen/t_caption" />
-            </ScrollView>
+                android:layout_marginTop="3dp"
+                android:text="@string/tab_settings"
+                android:textSize="@dimen/t_dock" />
         </LinearLayout>
     </LinearLayout>
-</ScrollView>
+</FrameLayout>

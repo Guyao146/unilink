@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dock 图标 · 首页：两点一线，与应用图标同源 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8,16.2l8.4,-5.9l1.1,1.6l-8.4,5.9z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4,16.5a3,3 0 1,0 6,0a3,3 0 1,0 -6,0z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M15,8a3,3 0 1,0 6,0a3,3 0 1,0 -6,0z" />
+</vector>
+

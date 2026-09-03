@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  卡片内的行
+  ==========
+  每一行有自己的浅玻璃底 —— 这是"一行一件事"的视觉载体。
+  上一版所有内容直接堆在卡片里，行与行之间没有边界，
+  是"信息密度高"的观感来源之一。
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/glass_press">
+
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_row" />
+            <solid android:color="@android:color/white" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_row" />
+            <solid android:color="@color/row_fill" />
+            <stroke
+                android:width="@dimen/hairline"
+                android:color="@color/row_edge" />
+        </shape>
+    </item>
+</ripple>

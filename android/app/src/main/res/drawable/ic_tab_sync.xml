@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dock 图标 · 同步：双向环形箭头 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,4c-3.6,0 -6.6,2.4 -7.6,5.6l2,0.6C7.2,7.9 9.4,6.2 12,6.2V9l4,-3.5L12,2z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,17.8c-2.6,0 -4.8,-1.7 -5.6,-4l-2,0.6C5.4,17.6 8.4,20 12,20v2l4,-3.5L12,15z" />
+</vector>

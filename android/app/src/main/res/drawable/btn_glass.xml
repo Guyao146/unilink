@@ -2,8 +2,7 @@
 <!--
   次级按钮（玻璃）
   ================
-  与主按钮同构，但填充是半透明白 —— 让它"让位于内容"，
-  这是 Liquid Glass 里控件层级的核心：只有一个操作值得用实色。
+  与卡片同构但更小的圆角，填充半透明白。
 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="@color/glass_ripple">

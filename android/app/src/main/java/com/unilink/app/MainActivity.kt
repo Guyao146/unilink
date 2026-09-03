@@ -12,9 +12,10 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ScrollView
+import android.widget.Space
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -35,12 +36,31 @@ class MainActivity : Activity() {
     private lateinit var swMirror: Switch
     private lateinit var swRecvNotify: Switch
     private lateinit var swRecvClip: Switch
-    private lateinit var tvStatus: TextView
-    private lateinit var tvListener: TextView
-    private lateinit var tvAuth: TextView
     private lateinit var etQrServer: EditText
+
+    // 首页状态区
+    private lateinit var tvStatus: TextView
+    private lateinit var tvStatusHint: TextView
+    private lateinit var dotStatus: View
+
+    // 连接页
+    private lateinit var tvAuth: TextView
+
+    // 同步页
     private lateinit var tvLog: TextView
     private lateinit var svLog: ScrollView
+
+    // 设置页：每项权限一个圆点 + 一行说明
+    private lateinit var tvListener: TextView
+    private lateinit var tvA11y: TextView
+    private lateinit var dotNotifAccess: View
+    private lateinit var dotNotifPost: View
+    private lateinit var dotA11y: View
+
+    /** 四个页面与对应的 Dock 项，索引一一对应 */
+    private lateinit var pages: List<View>
+    private lateinit var tabs: List<ViewGroup>
+    private var currentTab = 0
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -54,29 +74,67 @@ class MainActivity : Activity() {
         }
     }
 
-    /** 状态胶囊：文字 + 颜色随连接态平滑过渡 */
+    // ================= 渲染 =================
+
+    /**
+     * 首页状态区：圆点 + 大字 + 一句说明。
+     *
+     * 状态从"一行小字"升级成整页主角 —— 用户打开 App 最想知道的
+     * 就是"现在通不通"，这个信息值得占据最大的字号。
+     */
     private fun renderStatus() {
         val s = Hub.status
         if (tvStatus.text != s) tvStatus.text = s
-        val color = when {
-            s.contains("已连接") || s.contains("加密") -> R.color.ac_success
-            s.contains("连接中") || s.contains("等待") -> R.color.ac_warn
-            s.contains("错误") || s.contains("断开") || s.contains("失败") -> R.color.ac_danger
-            else -> R.color.ink_secondary
+
+        val (colorRes, hint) = when {
+            s.contains("已连接") || s.contains("加密") ->
+                R.color.ac_success to "已与电脑互通。通知、剪贴板与文件可双向传输。"
+            s.contains("连接中") || s.contains("等待") ->
+                R.color.ac_warn to "正在建立连接…"
+            s.contains("错误") || s.contains("失败") ->
+                R.color.ac_danger to "连接出错。检查服务器地址与令牌，详情见「同步」页的日志。"
+            s.contains("断开") ->
+                R.color.ink_tertiary to "已断开。点下方按钮重新连接。"
+            else ->
+                R.color.ink_tertiary to getString(R.string.status_idle_hint)
         }
-        Motion.tintText(tvStatus, getColor(color))
+        val color = getColor(colorRes)
+        Motion.tintText(tvStatus, color)
+        tintDot(dotStatus, color)
+        if (tvStatusHint.text != hint) tvStatusHint.text = hint
     }
 
-    /** 权限行：用圆点而非 emoji，保证各机型字形一致 */
+    /** 给圆点着色。圆点是共享 drawable，必须 mutate 后再改，否则会串色 */
+    private fun tintDot(dot: View, color: Int) {
+        val bg = dot.background?.mutate() ?: return
+        bg.setTint(color)
+        dot.background = bg
+    }
+
+    /** 设置页的权限行：圆点表示状态，文字只写结论不写指引 */
     private fun renderPermissions() {
-        val notif = if (notifListenerEnabled())
-            "● 通知读取权限已授予${if (Hub.listenerBound) "，工作中" else ""}"
-        else
-            "○ 通知读取权限未授予 —— 点下方「通知使用权」"
-        val a11y = if (Hub.a11y) "\n● 无障碍自动回复已开启"
-                   else "\n○ 无障碍自动回复未开启（可选）"
-        val text = notif + a11y
-        if (tvListener.text != text) tvListener.text = text
+        val granted = getColor(R.color.ac_success)
+        val missing = getColor(R.color.ac_danger)
+        val optional = getColor(R.color.ink_tertiary)
+
+        val notifOk = notifListenerEnabled()
+        tintDot(dotNotifAccess, if (notifOk) granted else missing)
+        val listenerText = when {
+            notifOk && Hub.listenerBound -> "已授予，正在同步"
+            notifOk -> "已授予"
+            else -> "未授予，无法同步通知"
+        }
+        if (tvListener.text != listenerText) tvListener.text = listenerText
+
+        val postOk = Build.VERSION.SDK_INT < 33 ||
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        tintDot(dotNotifPost, if (postOk) granted else missing)
+
+        tintDot(dotA11y, if (Hub.a11y) granted else optional)
+        val a11yText = if (Hub.a11y) "已开启，电脑回复可自动发送"
+                       else getString(R.string.perm_a11y_hint)
+        if (tvA11y.text != a11yText) tvA11y.text = a11yText
     }
 
     private fun renderLog() {
@@ -91,25 +149,59 @@ class MainActivity : Activity() {
         svLog.post { svLog.fullScroll(View.FOCUS_DOWN) }
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         prefs = Prefs(this)
 
+        bindViews()
+        loadPrefs()
+        bindActions()
+        setupDock()
+
+        handler.post(tick)
+    }
+
+    private fun bindViews() {
         etServer = findViewById(R.id.etServer)
         etRoom = findViewById(R.id.etRoom)
         etToken = findViewById(R.id.etToken)
         etName = findViewById(R.id.etName)
+        etQrServer = findViewById(R.id.etQrServer)
         swMirror = findViewById(R.id.swMirror)
         swRecvNotify = findViewById(R.id.swRecvNotify)
         swRecvClip = findViewById(R.id.swRecvClip)
+
         tvStatus = findViewById(R.id.tvStatus)
-        tvListener = findViewById(R.id.tvListener)
+        tvStatusHint = findViewById(R.id.tvStatusHint)
+        dotStatus = findViewById(R.id.dotStatus)
+
         tvAuth = findViewById(R.id.tvAuth)
-        etQrServer = findViewById(R.id.etQrServer)
         tvLog = findViewById(R.id.tvLog)
         svLog = findViewById(R.id.svLog)
 
+        tvListener = findViewById(R.id.tvListener)
+        tvA11y = findViewById(R.id.tvA11y)
+        dotNotifAccess = findViewById(R.id.dotNotifAccess)
+        dotNotifPost = findViewById(R.id.dotNotifPost)
+        dotA11y = findViewById(R.id.dotA11y)
+
+        pages = listOf(
+            findViewById(R.id.pageHome),
+            findViewById(R.id.pageLink),
+            findViewById(R.id.pageSync),
+            findViewById(R.id.pageSettings)
+        )
+        tabs = listOf(
+            findViewById(R.id.tabHome),
+            findViewById(R.id.tabLink),
+            findViewById(R.id.tabSync),
+            findViewById(R.id.tabSettings)
+        )
+    }
+
+    private fun loadPrefs() {
         etServer.setText(prefs.server)
         etRoom.setText(prefs.room)
         etToken.setText(prefs.token)
@@ -121,64 +213,98 @@ class MainActivity : Activity() {
         AuthSession.load(this)
         etQrServer.setText(AuthSession.qrServer(this))
         refreshAuthLine(force = true)
+    }
 
-        findViewById<Button>(R.id.btnStart).setOnClickListener { save(); start() }
-        findViewById<Button>(R.id.btnStop).setOnClickListener {
+    private fun bindActions() {
+        click(R.id.btnStart) { save(); start() }
+        click(R.id.btnStop) {
             startService(Intent(this, LinkService::class.java)
                 .setAction(LinkService.ACTION_STOP))
         }
-        findViewById<Button>(R.id.btnAccess).setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-            } catch (t: Throwable) {
-                Toast.makeText(this, "无法打开设置页，请手动前往", Toast.LENGTH_SHORT).show()
-            }
+        click(R.id.btnAccess) { openSettings(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS) }
+        click(R.id.btnPerm) { reqNotifPerm() }
+        click(R.id.btnA11y) {
+            openSettings(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            toast("在列表中找到 UniLink → 开启「UniLink 自动回复」")
         }
-        findViewById<Button>(R.id.btnPerm).setOnClickListener { reqNotifPerm() }
-        findViewById<Button>(R.id.btnA11y).setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                Toast.makeText(this,
-                    "在列表中找到 UniLink → 开启「UniLink 自动回复」",
-                    Toast.LENGTH_LONG).show()
-            } catch (t: Throwable) {
-                Toast.makeText(this, "无法打开无障碍设置，请手动前往", Toast.LENGTH_SHORT).show()
-            }
-        }
-        findViewById<Button>(R.id.btnShareClip).setOnClickListener { shareClip() }
-        findViewById<Button>(R.id.btnClear).setOnClickListener {
-            synchronized(Hub.logs) { Hub.logs.clear() }
-        }
-
-        findViewById<Button>(R.id.btnLogin).setOnClickListener { doLogin() }
-        findViewById<Button>(R.id.btnScanLogin).setOnClickListener { doScanLogin() }
-        findViewById<Button>(R.id.btnLogout).setOnClickListener { doLogout() }
-
-        applyMotion()
-        handler.post(tick)
+        click(R.id.btnShareClip) { shareClip() }
+        click(R.id.btnClear) { synchronized(Hub.logs) { Hub.logs.clear() } }
+        click(R.id.btnLogin) { doLogin() }
+        click(R.id.btnScanLogin) { doScanLogin() }
+        click(R.id.btnLogout) { doLogout() }
     }
+
+    /** 绑定点击并附带按压光效，省掉每处重复两行 */
+    private inline fun click(id: Int, crossinline action: () -> Unit) {
+        val v = findViewById<View>(id)
+        v.setOnClickListener { action() }
+        Motion.press(v)
+    }
+
+    private fun openSettings(action: String) {
+        try {
+            startActivity(Intent(action))
+        } catch (t: Throwable) {
+            toast("无法打开系统设置页，请手动前往")
+        }
+    }
+
+    private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+
+    // ================= Dock 导航 =================
 
     /**
-     * 挂上交互光效与入场动画。
+     * Dock 切页。
      *
-     * 卡片按在布局中的顺序错开淡入 —— 顺序取自滚动容器的子节点，
-     * 这样新增卡片时不必回来改这里。
+     * 页面用可见性切换而非 ViewPager：只有 4 页且状态需要保留
+     * （输入框内容、日志滚动位置），Fragment 生命周期反而是负担。
      */
-    private fun applyMotion() {
-        Motion.pressAll(
-            findViewById(R.id.btnLogin), findViewById(R.id.btnScanLogin),
-            findViewById(R.id.btnLogout), findViewById(R.id.btnStart),
-            findViewById(R.id.btnStop), findViewById(R.id.btnShareClip),
-            findViewById(R.id.btnAccess), findViewById(R.id.btnPerm),
-            findViewById(R.id.btnA11y), findViewById(R.id.btnClear)
-        )
+    private fun setupDock() {
+        tabs.forEachIndexed { i, tab ->
+            tab.setOnClickListener { selectTab(i) }
+            Motion.press(tab)
+        }
+        selectTab(0, animate = false)
+    }
 
-        // 卡片流容器 = 日志滚动区的祖父级（卡片 → 卡片流 → 根 ScrollView）
-        val column = svLog.parent?.let { it as? View }?.parent as? ViewGroup ?: return
-        for (i in 0 until column.childCount) {
-            Motion.enter(column.getChildAt(i), i)
+    private fun selectTab(index: Int, animate: Boolean = true) {
+        currentTab = index
+        pages.forEachIndexed { i, page ->
+            page.visibility = if (i == index) View.VISIBLE else View.GONE
+        }
+        tabs.forEachIndexed { i, tab ->
+            val on = i == index
+            tab.isSelected = on
+            // 选中项图标与文字提亮，未选中降到次级色 —— 靠明暗而非填充块区分
+            val color = getColor(if (on) R.color.ac_primary else R.color.ink_tertiary)
+            for (j in 0 until tab.childCount) {
+                when (val child = tab.getChildAt(j)) {
+                    is ImageView -> child.setColorFilter(color)
+                    is TextView -> child.setTextColor(color)
+                }
+            }
+        }
+        if (animate) {
+            val page = pages[index]
+            page.alpha = 0f
+            page.translationY = 16f
+            page.animate().alpha(1f).translationY(0f)
+                .setDuration(280L).setInterpolator(Motion.SNAPPY).start()
+            enterCards(page)
         }
     }
+
+    /** 页内卡片错开淡入，制造"内容浮现"而非"整块切换"的观感 */
+    private fun enterCards(page: View) {
+        val column = (page as? ScrollView)?.getChildAt(0) as? ViewGroup ?: return
+        var visibleIndex = 0
+        for (i in 0 until column.childCount) {
+            val child = column.getChildAt(i)
+            if (child is Space) continue        // 占位符不参与动画
+            Motion.enter(child, visibleIndex++)
+        }
+    }
+
 
     override fun onPause() {
         super.onPause()
@@ -223,7 +349,7 @@ class MainActivity : Activity() {
         authLineShown = key
         tvAuth.text = if (AuthSession.loggedIn) {
             val name = AuthSession.displayName(this).ifBlank { AuthSession.cachedUser }
-            "🔑 已登录 authentik：$name —— 可扫码登录任意接入 authentik 的项目"
+            "已登录：$name"
         } else {
             getString(R.string.login_none)
         }

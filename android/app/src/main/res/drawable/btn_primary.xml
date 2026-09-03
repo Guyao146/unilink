@@ -2,8 +2,8 @@
 <!--
   主按钮（强调）
   ==============
-  ripple 的 mask 决定波纹被裁剪在圆角内 —— 少了 mask 波纹会溢出成方形。
-  按下时叠一层高光（澎湃的"点按有光"），而非常规的整体压暗。
+  实色渐变 + 按下泛光。整屏只有一个主按钮 ——
+  Liquid Glass 的原则是控件让位于内容，多个实色按钮会互相争抢注意力。
 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="@color/glass_press">
@@ -16,29 +16,13 @@
     </item>
 
     <item>
-        <layer-list>
-            <!-- 高光描边 -->
-            <item>
-                <shape android:shape="rectangle">
-                    <corners android:radius="@dimen/r_control" />
-                    <gradient
-                        android:angle="270"
-                        android:endColor="@color/ac_primary_dim"
-                        android:startColor="@color/ac_primary"
-                        android:type="linear" />
-                </shape>
-            </item>
-            <!-- 内层：略暗，形成一圈亮边 -->
-            <item android:top="@dimen/hairline">
-                <shape android:shape="rectangle">
-                    <corners android:radius="@dimen/r_control" />
-                    <gradient
-                        android:angle="270"
-                        android:endColor="@color/ac_primary_dim"
-                        android:startColor="@color/ac_primary"
-                        android:type="linear" />
-                </shape>
-            </item>
-        </layer-list>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_control" />
+            <gradient
+                android:angle="270"
+                android:endColor="@color/ac_primary_dim"
+                android:startColor="@color/ac_primary"
+                android:type="linear" />
+        </shape>
     </item>
 </ripple>

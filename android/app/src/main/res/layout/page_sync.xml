@@ -86,7 +86,21 @@
                     style="@style/TextLabel" />
             </LinearLayout>
 
-            <!-- 固定高度的独立日志窗口：由 LogView 自己处理滚动。 -->`n            <com.unilink.app.ui.LogView`n                android:id="@+id/tvLog"`n                android:layout_width="match_parent"`n                android:layout_height="240dp"`n                android:layout_marginTop="@dimen/sp_lg"`n                android:background="@drawable/log_surface"`n                android:fontFamily="monospace"`n                android:lineSpacingMultiplier="1.4"`n                android:padding="@dimen/sp_lg"`n                android:scrollbars="vertical"`n                android:text="@string/log_empty"`n                android:textColor="@color/log_text"`n                android:textIsSelectable="true"`n                android:textSize="@dimen/t_caption" />
+            <!-- 固定高度的独立日志窗口：由 LogView 自己处理滚动。 -->
+            <com.unilink.app.ui.LogView
+                android:id="@+id/tvLog"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:layout_marginTop="@dimen/sp_lg"
+                android:background="@drawable/log_surface"
+                android:fontFamily="monospace"
+                android:lineSpacingMultiplier="1.4"
+                android:padding="@dimen/sp_lg"
+                android:scrollbars="vertical"
+                android:text="@string/log_empty"
+                android:textColor="@color/log_text"
+                android:textIsSelectable="true"
+                android:textSize="@dimen/t_caption" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

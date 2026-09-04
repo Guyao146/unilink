@@ -36,6 +36,19 @@
             </LinearLayout>
         </LinearLayout>
 
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="@string/sec_connection" style="@style/TextLabel" />
+        <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/retry_count" style="@style/TextBody" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/retry_count_hint" style="@style/TextCaption" />
+            <EditText
+                android:id="@+id/etRetryCount"
+                android:layout_marginTop="@dimen/sp_md"
+                android:hint="0"
+                android:inputType="number"
+                android:selectAllOnFocus="true"
+                style="@style/FieldGlass" />
+        </LinearLayout>
+
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="应用信息" style="@style/TextLabel" />
         <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
             <LinearLayout android:id="@+id/btnAboutBottom" android:layout_width="match_parent" android:layout_height="60dp" android:background="@drawable/row_glass" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="@dimen/sp_lg" android:paddingEnd="@dimen/sp_lg">

@@ -36,8 +36,14 @@ class LinkService : Service() {
     private var ws: WebSocket? = null
     private var wantRun = false
     private var backoffMs = 1000L
+    private var retryCount = 0
+    private var reconnectScheduled = false
     private var permWarned = false
     private val ui = Handler(Looper.getMainLooper())
+    private val reconnectRunnable = Runnable {
+        reconnectScheduled = false
+        connect()
+    }
     private val incoming = HashMap<String, Incoming>()
 
     class Incoming(val name: String, val size: Long, val mime: String, val total: Int) {
@@ -63,6 +69,8 @@ class LinkService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             wantRun = false
+            reconnectScheduled = false
+            ui.removeCallbacks(reconnectRunnable)
             Hub.status = "已断开"
             Hub.send = null
             ws?.close(1000, "bye")
@@ -71,6 +79,11 @@ class LinkService : Service() {
             return START_NOT_STICKY
         }
         wantRun = true
+        // 用户主动点击连接时，重新开始计算失败次数并取消旧的等待任务。
+        retryCount = 0
+        backoffMs = 1000L
+        reconnectScheduled = false
+        ui.removeCallbacks(reconnectRunnable)
         Hub.deviceName = prefs.deviceName
         CryptoHolder.ensure(prefs.room, prefs.token)
         startForeground(NOTIF_ID, serviceNotif("UniLink 运行中", "正在连接 ${prefs.server}"))
@@ -82,7 +95,7 @@ class LinkService : Service() {
         wantRun = false
         Hub.send = null
         ws?.cancel()
-        ui.removeCallbacksAndMessages(null)
+        ui.removeCallbacks(reconnectRunnable)
         super.onDestroy()
     }
 
@@ -101,6 +114,7 @@ class LinkService : Service() {
         ws = http.newWebSocket(req, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 backoffMs = 1000
+                retryCount = 0
                 val hello = JSONObject()
                     .put("type", "hello")
                     .put("room", prefs.room)
@@ -136,8 +150,17 @@ class LinkService : Service() {
     }
 
     private fun scheduleReconnect() {
-        if (!wantRun) return
-        ui.postDelayed({ connect() }, backoffMs)
+        if (!wantRun || reconnectScheduled) return
+        val maxRetries = prefs.retryAttempts
+        if (maxRetries > 0 && retryCount >= maxRetries) {
+            Hub.status = "连接失败（已停止重试）"
+            Hub.log("已达到重试上限（$maxRetries 次），停止连接")
+            return
+        }
+        retryCount++
+        reconnectScheduled = true
+        Hub.log("将在 ${backoffMs / 1000} 秒后重试（第 $retryCount 次）")
+        ui.postDelayed(reconnectRunnable, backoffMs)
         backoffMs = (backoffMs * 2).coerceAtMost(30_000)
     }
 

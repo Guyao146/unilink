@@ -86,26 +86,23 @@
                     style="@style/TextLabel" />
             </LinearLayout>
 
-            <!-- 固定高度：日志是一个可滚动的"窗口"，不无限拉长页面 -->
-            <ScrollView
-                android:id="@+id/svLog"
+            <!-- 固定高度、只显示最新日志：避免与页面滚动争夺手势。 -->
+            <TextView
+                android:id="@+id/tvLog"
                 android:layout_width="match_parent"
                 android:layout_height="240dp"
                 android:layout_marginTop="@dimen/sp_lg"
                 android:background="@drawable/log_surface"
-                android:scrollbars="none">
-
-                <TextView
-                    android:id="@+id/tvLog"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:lineSpacingMultiplier="1.4"
-                    android:padding="@dimen/sp_lg"
-                    android:textColor="@color/log_text"
-                    android:textIsSelectable="true"
-                    android:textSize="@dimen/t_caption" />
-            </ScrollView>
+                android:ellipsize="start"
+                android:fontFamily="monospace"
+                android:gravity="bottom"
+                android:lineSpacingMultiplier="1.4"
+                android:maxLines="12"
+                android:padding="@dimen/sp_lg"
+                android:text="@string/log_empty"
+                android:textColor="@color/log_text"
+                android:textIsSelectable="true"
+                android:textSize="@dimen/t_caption" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

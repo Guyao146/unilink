@@ -86,10 +86,10 @@
                 android:paddingStart="@dimen/sp_lg"
                 android:paddingEnd="@dimen/sp_lg">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="版本" style="@style/TextBody" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1.0.0" style="@style/TextLabel" />
+                <TextView android:id="@+id/tvVersion" android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/TextLabel" />
             </LinearLayout>
 
-            <TextView
+            <LinearLayout
                 android:id="@+id/btnWebsite"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
@@ -98,11 +98,25 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingStart="@dimen/sp_lg"
-                android:paddingEnd="@dimen/sp_lg"
-                android:text="官方网站                              ›"
-                android:textColor="@color/ac_primary"
-                android:textSize="@dimen/t_body" />
+                android:paddingEnd="@dimen/sp_lg">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="官方网站"
+                    android:textColor="@color/ac_primary"
+                    android:textSize="@dimen/t_body" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textColor="@color/ink_tertiary"
+                    android:textSize="32sp" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

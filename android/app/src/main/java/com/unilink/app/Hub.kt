@@ -32,6 +32,7 @@ object Hub {
     @Volatile var a11y = false                          // 无障碍（自动回复）服务是否在线
 
     val logs = ArrayDeque<String>()
+    @Volatile var logObserver: (() -> Unit)? = null
 
     private val rates = HashMap<String, Long>()         // 相同内容通知的限流表
 
@@ -41,6 +42,7 @@ object Hub {
             logs.addLast("[$ts] $line")
             while (logs.size > 400) logs.removeFirst()
         }
+        logObserver?.invoke()
     }
 
     fun submit(env: JSONObject) {

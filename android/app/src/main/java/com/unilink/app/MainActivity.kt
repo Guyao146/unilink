@@ -34,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var etRoom: EditText
     private lateinit var etToken: EditText
     private lateinit var etName: EditText
+    private lateinit var etRetryCount: EditText
     private lateinit var swMirror: Switch
     private lateinit var swRecvNotify: Switch
     private lateinit var swRecvClip: Switch
@@ -50,7 +51,7 @@ class MainActivity : Activity() {
 
     // 同步页
     private lateinit var tvLog: TextView
-    private lateinit var svLog: ScrollView
+    private lateinit var tvVersion: TextView
 
     // 设置页：每项权限一个圆点 + 一行说明
     private lateinit var tvListener: TextView
@@ -152,15 +153,18 @@ class MainActivity : Activity() {
     }
 
     private fun renderLog() {
-        val sb = StringBuilder()
-        synchronized(Hub.logs) {
-            for (l in Hub.logs) sb.append(l).append('\n')
+        val text = synchronized(Hub.logs) {
+            Hub.logs.toList().takeLast(12).joinToString("\n")
         }
-        if (sb.isEmpty()) return
-        val text = sb.toString()
-        if (tvLog.text == text) return          // 内容未变就不重排版
-        tvLog.text = text
-        svLog.post { svLog.fullScroll(View.FOCUS_DOWN) }
+        val shown = text.ifBlank { getString(R.string.log_empty) }
+        if (tvLog.text.toString() != shown) tvLog.text = shown
+    }
+
+    private fun clearLogs() {
+        synchronized(Hub.logs) {
+            Hub.logs.clear()
+        }
+        renderLog()
     }
 
 
@@ -170,6 +174,7 @@ class MainActivity : Activity() {
         prefs = Prefs(this)
 
         bindViews()
+        Hub.logObserver = { handler.post { renderLog() } }
         loadPrefs()
         bindActions()
         setupDock()
@@ -182,6 +187,7 @@ class MainActivity : Activity() {
         etRoom = findViewById(R.id.etRoom)
         etToken = findViewById(R.id.etToken)
         etName = findViewById(R.id.etName)
+        etRetryCount = findViewById(R.id.etRetryCount)
         etQrServer = findViewById(R.id.etQrServer)
         swMirror = findViewById(R.id.swMirror)
         swRecvNotify = findViewById(R.id.swRecvNotify)
@@ -194,7 +200,8 @@ class MainActivity : Activity() {
 
         tvAuth = findViewById(R.id.tvAuth)
         tvLog = findViewById(R.id.tvLog)
-        svLog = findViewById(R.id.svLog)
+        tvVersion = findViewById(R.id.tvVersion)
+        tvVersion.text = BuildConfig.VERSION_NAME
 
         tvListener = findViewById(R.id.tvListener)
         tvA11y = findViewById(R.id.tvA11y)
@@ -228,6 +235,7 @@ class MainActivity : Activity() {
         swMirror.isChecked = prefs.mirrorOut
         swRecvNotify.isChecked = prefs.recvNotify
         swRecvClip.isChecked = prefs.recvClip
+        etRetryCount.setText(prefs.retryAttempts.toString())
 
         AuthSession.load(this)
         etQrServer.setText(AuthSession.qrServer(this))
@@ -247,7 +255,7 @@ class MainActivity : Activity() {
             toast("在列表中找到 UniLink → 开启「UniLink 自动回复」")
         }
         click(R.id.btnShareClip) { shareClip() }
-        click(R.id.btnClear) { synchronized(Hub.logs) { Hub.logs.clear() } }
+        click(R.id.btnClear) { clearLogs() }
         click(R.id.btnLogin) { doLogin() }
         click(R.id.btnScanLogin) { doScanLogin() }
         click(R.id.btnLogout) { doLogout() }
@@ -387,6 +395,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        Hub.logObserver = null
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
     }
@@ -407,6 +416,7 @@ class MainActivity : Activity() {
         prefs.mirrorOut = swMirror.isChecked
         prefs.recvNotify = swRecvNotify.isChecked
         prefs.recvClip = swRecvClip.isChecked
+        prefs.retryAttempts = etRetryCount.text.toString().toIntOrNull()?.coerceAtLeast(0) ?: 0
         val qr = etQrServer.text.toString().trim()
         if (qr.isNotBlank()) AuthSession.setQrServer(this, qr)
     }

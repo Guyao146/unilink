@@ -49,6 +49,7 @@
     <string name="sw_recv_clip">自动接收剪贴板</string>
     <string name="sec_activity">活动日志</string>
     <string name="btn_clear">清空</string>
+    <string name="log_empty">暂无活动</string>
 
     <!-- ── 设置页 ── -->
     <string name="sec_permission">权限</string>
@@ -59,6 +60,9 @@
     <string name="perm_a11y">无障碍自动回复</string>
     <string name="perm_a11y_hint">可选，在电脑上回复时自动发送</string>
     <string name="btn_grant">授予</string>
+    <string name="sec_connection">连接</string>
+    <string name="retry_count">失败后重试次数</string>
+    <string name="retry_count_hint">0 表示无限次</string>
 
     <string name="sec_about">关于</string>
     <string name="about_body">UniLink · 手机与电脑互联助手\n通知镜像 / 剪贴板 / 文件传输 / 扫码登录\n端到端 AES-256-GCM 加密，服务器只转发密文。</string>

@@ -32,6 +32,23 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      # 可选：还原固定的 debug 签名，让 CI 产出的 APK 能与本地构建互相覆盖安装。
+      # 未配置该 Secret 时什么都不做，Gradle 会回落到自动生成的 debug 密钥
+      # （此时 CI 的 APK 与本地 APK 签名不同，无法互相覆盖，需先卸载）。
+      # 生成方式：base64 -w0 android/unilink-debug.jks
+      #
+      # 判断写在 shell 里而非 step 的 if： secrets 上下文在 step 级 if 中不可用。
+      - name: Restore debug keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android/unilink-debug.jks
+            echo "已还原固定 debug 签名"
+          else
+            echo "未配置 DEBUG_KEYSTORE_BASE64，使用 Gradle 自动生成的 debug 密钥"
+          fi
+
       - name: Run unit tests
         working-directory: android
         run: |

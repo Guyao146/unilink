@@ -36,4 +36,9 @@ class Prefs(ctx: Context) {
     var recvClip: Boolean
         get() = sp.getBoolean("recv_clip", true)
         set(v) = sp.edit().putBoolean("recv_clip", v).apply()
+
+    /** 连接失败后的重试次数；0 表示持续重试。 */
+    var retryAttempts: Int
+        get() = sp.getInt("retry_attempts", 0).coerceAtLeast(0)
+        set(v) = sp.edit().putInt("retry_attempts", v.coerceAtLeast(0)).apply()
 }

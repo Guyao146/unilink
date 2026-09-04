@@ -11,11 +11,38 @@ android {
         applicationId "com.unilink.app"
         minSdk 24          // Android 7.0+
         targetSdk 34
-        versionCode 5
-        versionName "1.0.5"
+        versionCode 6
+        versionName "1.0.6"
+    }
+
+    // 项目专用的固定 debug 签名：同一台或不同电脑只要使用此文件，
+    // 生成的 debug APK 即可覆盖安装，不会每次更换签名。
+    //
+    // 该文件不入版本库（见 android/.gitignore），因此 CI 上并不存在。
+    // 这里做存在性判断：有则用固定签名，没有则回落到 Gradle 自动生成的
+    // debug 密钥 —— 否则 CI 会因 "Keystore file not found" 直接失败。
+    //
+    // 想让 CI 也产出同一签名的 APK：把 jks 转 base64 存进仓库 Secret
+    // （DEBUG_KEYSTORE_BASE64），workflow 里会自动还原，见 android-build.yml。
+    def debugKeystore = file('../unilink-debug.jks')
+
+    signingConfigs {
+        if (debugKeystore.exists()) {
+            debugFixed {
+                storeFile debugKeystore
+                storePassword 'android'
+                keyAlias 'unilink-debug'
+                keyPassword 'android'
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            if (debugKeystore.exists()) {
+                signingConfig signingConfigs.debugFixed
+            }
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -27,6 +54,10 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = '17' }
+
+    buildFeatures {
+        buildConfig true
+    }
 
     testOptions {
         // 本地单元测试里 android.jar 的方法默认抛异常；返回默认值更适合纯逻辑测试。

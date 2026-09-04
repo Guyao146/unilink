@@ -24,6 +24,7 @@ import com.unilink.app.auth.AuthSession
 import com.unilink.app.auth.LoginActivity
 import com.unilink.app.auth.QrTicket
 import com.unilink.app.auth.ScanLoginActivity
+import com.unilink.app.ui.LogView
 import com.unilink.app.ui.Motion
 import org.json.JSONObject
 
@@ -50,7 +51,7 @@ class MainActivity : Activity() {
     private lateinit var tvAuth: TextView
 
     // 同步页
-    private lateinit var tvLog: TextView
+    private lateinit var tvLog: LogView
     private lateinit var tvVersion: TextView
 
     // 设置页：每项权限一个圆点 + 一行说明
@@ -154,10 +155,10 @@ class MainActivity : Activity() {
 
     private fun renderLog() {
         val text = synchronized(Hub.logs) {
-            Hub.logs.toList().takeLast(12).joinToString("\n")
+            Hub.logs.toList().joinToString("\n")
         }
         val shown = text.ifBlank { getString(R.string.log_empty) }
-        if (tvLog.text.toString() != shown) tvLog.text = shown
+        tvLog.updateLogText(shown)
     }
 
     private fun clearLogs() {

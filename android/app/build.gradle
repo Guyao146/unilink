@@ -11,8 +11,8 @@ android {
         applicationId "com.unilink.app"
         minSdk 24          // Android 7.0+
         targetSdk 34
-        versionCode 6
-        versionName "1.0.6"
+        versionCode 7
+        versionName "1.0.7"
     }
 
     // 项目专用的固定 debug 签名：同一台或不同电脑只要使用此文件，

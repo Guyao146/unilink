@@ -58,6 +58,7 @@ class SwipePageHost @JvmOverloads constructor(
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                stopAnimations()
                 downX = event.x
                 downY = event.y
                 dragging = false
@@ -111,13 +112,22 @@ class SwipePageHost @JvmOverloads constructor(
         val old = page(currentPage) ?: return
         if (activeTarget !in 0 until swipePageCount) {
             // 边界页使用阻尼拖动，松手后回弹
-            old.translationX = dx * 0.22f
+            old.translationX = dx * 0.18f
+            old.alpha = 1f - (abs(dx) / width.coerceAtLeast(1) * 0.08f)
             return
         }
         val next = page(activeTarget) ?: return
         val w = width.toFloat().coerceAtLeast(1f)
-        old.translationX = dx
-        next.translationX = activeDirection * w + dx
+        val progress = (abs(dx) / w).coerceIn(0f, 1f)
+        // 页面不再整屏横飞，只做轻微视差；主变化来自透明度与缩放
+        old.translationX = dx * 0.18f
+        old.scaleX = 1f - progress * 0.035f
+        old.scaleY = 1f - progress * 0.035f
+        old.alpha = 1f - progress * 0.28f
+        next.translationX = activeDirection * w * 0.18f + dx * 0.18f
+        next.scaleX = 0.965f + progress * 0.035f
+        next.scaleY = 0.965f + progress * 0.035f
+        next.alpha = 0.72f + progress * 0.28f
     }
 
     private fun finishDrag(dx: Float) {
@@ -128,48 +138,74 @@ class SwipePageHost @JvmOverloads constructor(
             abs(dx) >= threshold &&
             ((activeDirection < 0 && dx < 0f) || (activeDirection > 0 && dx > 0f))
 
-        if (!complete) {
-            old.animate().translationX(0f).setDuration(220L)
-                .setInterpolator(Motion.SMOOTH).withEndAction {
-                    page(target)?.apply {
+        val next = page(target)
+        if (!complete || next == null) {
+            // 只回到手势开始前的状态，不做突然的横向跳回
+            old.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f)
+                .setDuration(240L).setInterpolator(Motion.SMOOTH).withEndAction {
+                    next?.apply {
                         visibility = View.GONE
                         translationX = 0f
+                        scaleX = 1f
+                        scaleY = 1f
+                        alpha = 1f
                     }
                 }.start()
         } else {
-            val next = page(target)
-            if (next != null) {
-                val out = if (activeDirection < 0) -width.toFloat() else width.toFloat()
-                old.animate().translationX(out).setDuration(280L)
-                    .setInterpolator(Motion.SNAPPY).start()
-                next.animate().translationX(0f).setDuration(280L)
-                    .setInterpolator(Motion.SNAPPY).withEndAction {
-                        currentPage = target
-                        onSwipePage?.invoke(target)
-                    }.start()
-            }
+            // 当前拖动已经完成一部分；只补完剩余距离，避免重新从屏外飞入
+            old.animate().translationX(0f).scaleX(0.965f).scaleY(0.965f).alpha(0f)
+                .setDuration(260L).setInterpolator(Motion.SMOOTH).start()
+            next.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f)
+                .setDuration(260L).setInterpolator(Motion.SMOOTH).withEndAction {
+                    old.visibility = View.GONE
+                    old.translationX = 0f
+                    old.scaleX = 1f
+                    old.scaleY = 1f
+                    old.alpha = 1f
+                    currentPage = target
+                    onSwipePage?.invoke(target)
+                }.start()
         }
         dragging = false
         parent?.requestDisallowInterceptTouchEvent(false)
     }
 
-    /** Dock/其它代码调用的动画切页 */
+    /** Dock/其它代码调用的动画切页：与手势保持同一套渐进式视觉语言。 */
     private fun transition(old: View, next: View, direction: Int) {
         for (i in 0 until childCount) {
             page(i)?.visibility = if (page(i) == old || page(i) == next) View.VISIBLE else View.GONE
         }
         val w = width.toFloat().coerceAtLeast(1f)
-        next.translationX = direction * w
+        val offset = w * 0.18f
+        next.translationX = direction * offset
+        next.scaleX = 0.965f
+        next.scaleY = 0.965f
+        next.alpha = 0.72f
         old.translationX = 0f
-        old.animate().translationX(if (direction < 0) -w else w)
-            .setDuration(280L).setInterpolator(Motion.SNAPPY).start()
-        next.animate().translationX(0f).setDuration(280L)
-            .setInterpolator(Motion.SNAPPY).withEndAction {
+        old.scaleX = 1f
+        old.scaleY = 1f
+        old.alpha = 1f
+
+        old.animate().translationX(if (direction < 0) -offset else offset)
+            .scaleX(0.965f).scaleY(0.965f).alpha(0.72f)
+            .setDuration(260L).setInterpolator(Motion.SMOOTH).start()
+        next.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f)
+            .setDuration(260L).setInterpolator(Motion.SMOOTH).withEndAction {
                 currentPage = indexOfChild(next)
                 for (i in 0 until childCount) if (page(i) != next) {
-                    page(i)?.apply { visibility = View.GONE; translationX = 0f }
+                    page(i)?.apply {
+                        visibility = View.GONE
+                        translationX = 0f
+                        scaleX = 1f
+                        scaleY = 1f
+                        alpha = 1f
+                    }
                 }
             }.start()
+    }
+
+    private fun stopAnimations() {
+        for (i in 0 until childCount) page(i)?.animate()?.cancel()
     }
 }
 

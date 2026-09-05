@@ -37,8 +37,8 @@ class SwipePageHost @JvmOverloads constructor(
     private fun page(index: Int): View? =
         if (index in 0 until childCount) getChildAt(index) else null
 
-    /** 显示指定页面；direction=-1 左滑方向，direction=1 右滑方向 */
-    fun showPage(index: Int, animate: Boolean = true, direction: Int = 0) {
+    /** 显示指定页面；采用同一平面的交叉淡化 */
+    fun showPage(index: Int, animate: Boolean = true) {
         if (index !in 0 until childCount) return
         val old = page(currentPage)
         val next = page(index) ?: return
@@ -51,8 +51,7 @@ class SwipePageHost @JvmOverloads constructor(
             currentPage = index
             return
         }
-        val dir = if (direction == 0) if (index > currentPage) -1 else 1 else direction
-        transition(old, next, dir)
+        transition(old, next)
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
@@ -72,7 +71,7 @@ class SwipePageHost @JvmOverloads constructor(
                     dragging = true
                     activeDirection = if (dx < 0f) -1 else 1
                     activeTarget = currentPage - activeDirection
-                    prepareDrag(activeTarget, activeDirection)
+                    prepareDrag(activeTarget)
                     parent?.requestDisallowInterceptTouchEvent(true)
                     return true
                 }
@@ -95,39 +94,37 @@ class SwipePageHost @JvmOverloads constructor(
         return true
     }
 
-    private fun prepareDrag(target: Int, direction: Int) {
+    private fun prepareDrag(target: Int) {
         val old = page(currentPage) ?: return
         val next = page(target)
         if (next == null || target !in 0 until swipePageCount) {
-            old.translationX = 0f
+            old.alpha = 1f
             return
         }
+        // 两页重叠在同一位置：手势只改变透明度，不改变几何层级
         next.visibility = View.VISIBLE
-        next.alpha = 1f
-        next.translationX = direction * width.toFloat()
+        next.translationX = 0f
+        next.scaleX = 1f
+        next.scaleY = 1f
+        next.alpha = 0f
         old.translationX = 0f
+        old.scaleX = 1f
+        old.scaleY = 1f
+        old.alpha = 1f
     }
 
     private fun dragTo(dx: Float) {
         val old = page(currentPage) ?: return
         if (activeTarget !in 0 until swipePageCount) {
-            // 边界页使用阻尼拖动，松手后回弹
-            old.translationX = dx * 0.18f
+            // 边界页只做轻微透明度反馈，松手后恢复
             old.alpha = 1f - (abs(dx) / width.coerceAtLeast(1) * 0.08f)
             return
         }
         val next = page(activeTarget) ?: return
-        val w = width.toFloat().coerceAtLeast(1f)
-        val progress = (abs(dx) / w).coerceIn(0f, 1f)
-        // 页面不再整屏横飞，只做轻微视差；主变化来自透明度与缩放
-        old.translationX = dx * 0.18f
-        old.scaleX = 1f - progress * 0.035f
-        old.scaleY = 1f - progress * 0.035f
-        old.alpha = 1f - progress * 0.28f
-        next.translationX = activeDirection * w * 0.18f + dx * 0.18f
-        next.scaleX = 0.965f + progress * 0.035f
-        next.scaleY = 0.965f + progress * 0.035f
-        next.alpha = 0.72f + progress * 0.28f
+        val progress = (abs(dx) / width.toFloat().coerceAtLeast(1f)).coerceIn(0f, 1f)
+        // 同一平面的渐进交叉淡化：位置、大小和层级几何关系完全不变
+        old.alpha = 1f - progress
+        next.alpha = progress
     }
 
     private fun finishDrag(dx: Float) {
@@ -140,28 +137,20 @@ class SwipePageHost @JvmOverloads constructor(
 
         val next = page(target)
         if (!complete || next == null) {
-            // 只回到手势开始前的状态，不做突然的横向跳回
-            old.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f)
-                .setDuration(240L).setInterpolator(Motion.SMOOTH).withEndAction {
-                    next?.apply {
-                        visibility = View.GONE
-                        translationX = 0f
-                        scaleX = 1f
-                        scaleY = 1f
-                        alpha = 1f
-                    }
+            // 只恢复透明度，不做位移/缩放回弹
+            old.animate().alpha(1f).setDuration(240L)
+                .setInterpolator(Motion.SMOOTH).withEndAction {
+                    next?.apply { visibility = View.GONE; alpha = 1f }
                 }.start()
         } else {
-            // 当前拖动已经完成一部分；只补完剩余距离，避免重新从屏外飞入
-            old.animate().translationX(0f).scaleX(0.965f).scaleY(0.965f).alpha(0f)
-                .setDuration(260L).setInterpolator(Motion.SMOOTH).start()
-            next.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f)
-                .setDuration(260L).setInterpolator(Motion.SMOOTH).withEndAction {
+            // 两页始终重叠同层，只补完透明度差值
+            old.animate().alpha(0f).setDuration(260L)
+                .setInterpolator(Motion.SMOOTH).start()
+            next.animate().alpha(1f).setDuration(260L)
+                .setInterpolator(Motion.SMOOTH).withEndAction {
                     old.visibility = View.GONE
-                    old.translationX = 0f
-                    old.scaleX = 1f
-                    old.scaleY = 1f
                     old.alpha = 1f
+                    next.alpha = 1f
                     currentPage = target
                     onSwipePage?.invoke(target)
                 }.start()
@@ -170,37 +159,26 @@ class SwipePageHost @JvmOverloads constructor(
         parent?.requestDisallowInterceptTouchEvent(false)
     }
 
-    /** Dock/其它代码调用的动画切页：与手势保持同一套渐进式视觉语言。 */
-    private fun transition(old: View, next: View, direction: Int) {
+    /** Dock 点击也使用同一平面的交叉淡化，不改变页面位置或大小。 */
+    private fun transition(old: View, next: View) {
         for (i in 0 until childCount) {
-            page(i)?.visibility = if (page(i) == old || page(i) == next) View.VISIBLE else View.GONE
+            page(i)?.apply {
+                visibility = if (this == old || this == next) View.VISIBLE else View.GONE
+                translationX = 0f
+                scaleX = 1f
+                scaleY = 1f
+            }
         }
-        val w = width.toFloat().coerceAtLeast(1f)
-        val offset = w * 0.18f
-        next.translationX = direction * offset
-        next.scaleX = 0.965f
-        next.scaleY = 0.965f
-        next.alpha = 0.72f
-        old.translationX = 0f
-        old.scaleX = 1f
-        old.scaleY = 1f
         old.alpha = 1f
-
-        old.animate().translationX(if (direction < 0) -offset else offset)
-            .scaleX(0.965f).scaleY(0.965f).alpha(0.72f)
-            .setDuration(260L).setInterpolator(Motion.SMOOTH).start()
-        next.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f)
-            .setDuration(260L).setInterpolator(Motion.SMOOTH).withEndAction {
+        next.alpha = 0f
+        old.animate().alpha(0f).setDuration(260L)
+            .setInterpolator(Motion.SMOOTH).start()
+        next.animate().alpha(1f).setDuration(260L)
+            .setInterpolator(Motion.SMOOTH).withEndAction {
                 currentPage = indexOfChild(next)
-                for (i in 0 until childCount) if (page(i) != next) {
-                    page(i)?.apply {
-                        visibility = View.GONE
-                        translationX = 0f
-                        scaleX = 1f
-                        scaleY = 1f
-                        alpha = 1f
-                    }
-                }
+                old.visibility = View.GONE
+                old.alpha = 1f
+                next.alpha = 1f
             }.start()
     }
 

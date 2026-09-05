@@ -14,8 +14,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.ScrollView
-import android.widget.Space
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -373,8 +371,7 @@ class MainActivity : AppCompatActivity() {
         dock.visibility = View.VISIBLE
 
         if (!fromSwipe) {
-            val direction = if (index >= pageHost.currentPage) -1 else 1
-            pageHost.showPage(index, animate = animate, direction = direction)
+            pageHost.showPage(index, animate = animate)
         }
 
         updateDockSelection(index)
@@ -416,17 +413,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAbout() {
         showingAbout = true
-        pages.forEachIndexed { i, page -> page.visibility = if (i == 4) View.VISIBLE else View.GONE }
+        pages.forEachIndexed { i, page ->
+            page.visibility = if (i == 4) View.VISIBLE else View.GONE
+            page.translationX = 0f
+            page.scaleX = 1f
+            page.scaleY = 1f
+            page.alpha = if (i == 4) 0f else 1f
+        }
         dock.animate().alpha(0f).setDuration(160L).withEndAction {
             dock.visibility = View.GONE
             dock.alpha = 1f
         }.start()
         val about = pages[4]
+        // 关于页与主页面保持同一平面，只做柔和淡化
         about.alpha = 0f
-        about.translationX = 36f
-        about.animate().alpha(1f).translationX(0f).setDuration(300L)
-            .setInterpolator(Motion.SNAPPY).start()
-        enterCards(about)
+        about.translationX = 0f
+        about.animate().alpha(1f).setDuration(260L)
+            .setInterpolator(Motion.SMOOTH).start()
     }
 
     private fun hideAbout() = selectTab(3)
@@ -438,18 +441,6 @@ class MainActivity : AppCompatActivity() {
             toast("无法打开官网，请检查浏览器是否可用")
         }
     }
-
-    /** 页内卡片错开淡入，制造"内容浮现"而非"整块切换"的观感 */
-    private fun enterCards(page: View) {
-        val column = (page as? ScrollView)?.getChildAt(0) as? ViewGroup ?: return
-        var visibleIndex = 0
-        for (i in 0 until column.childCount) {
-            val child = column.getChildAt(i)
-            if (child is Space) continue        // 占位符不参与动画
-            Motion.enter(child, visibleIndex++)
-        }
-    }
-
 
     override fun onPause() {
         super.onPause()

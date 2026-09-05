@@ -2,10 +2,8 @@
 <!--
   页面 3 · 同步
   =============
-  三个开关一行一个（60dp 行高，各自有玻璃底），下方是活动日志。
-
-  上一版三个开关紧贴堆叠、没有边界，是"密度过高"最刺眼的地方。
-  现在每个开关是一张独立的行卡，行与行之间 8dp 间距。
+  三个开关一行一个（60dp 行高，iOS 胶囊开关在右），下方是活动日志。
+  每个开关是独立的行卡，"一行一件事"有清晰的视觉边界。
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/pageSync"
@@ -75,15 +73,15 @@
                     android:id="@+id/btnClear"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/row_glass"
+                    android:background="@drawable/status_island"
                     android:clickable="true"
                     android:focusable="true"
-                    android:paddingStart="@dimen/sp_lg"
-                    android:paddingEnd="@dimen/sp_lg"
+                    android:paddingStart="@dimen/sp_md"
+                    android:paddingEnd="@dimen/sp_md"
                     android:paddingTop="@dimen/sp_sm"
                     android:paddingBottom="@dimen/sp_sm"
                     android:text="@string/btn_clear"
-                    style="@style/TextLabel" />
+                    style="@style/TextCaption" />
             </LinearLayout>
 
             <!-- 固定高度的独立日志窗口：由 LogView 自己处理滚动。 -->

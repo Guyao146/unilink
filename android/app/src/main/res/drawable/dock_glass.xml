@@ -4,13 +4,13 @@
   =========
   澎湃 4 的"全新悬浮框架"：导航不再是贴底的实心条，
   而是一块浮在内容之上、四角全圆的玻璃面板。
-  更大的圆角（32dp）与更强的高光边让它明确"离开"页面平面。
+  全圆胶囊（iOS 26 Liquid Glass 的 Dock 形态），顶缘高光让它明确"离开"页面平面。
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_sheet" />
+            <corners android:radius="@dimen/r_pill" />
             <gradient
                 android:angle="270"
                 android:endColor="@color/glass_edge_dark"
@@ -25,7 +25,7 @@
         android:right="@dimen/hairline"
         android:top="@dimen/hairline">
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_sheet" />
+            <corners android:radius="@dimen/r_pill" />
             <gradient
                 android:angle="270"
                 android:endColor="@color/dock_fill_bottom"

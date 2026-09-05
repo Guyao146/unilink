@@ -1,45 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/pageSettings" style="@style/PageScroll">
-    <LinearLayout style="@style/PageColumn">
-        <Space android:layout_width="match_parent" android:layout_height="@dimen/sp_3xl" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tab_settings" style="@style/TextDisplay" />
-        <TextView android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="@dimen/sp_lg" android:background="@drawable/field_glass" android:gravity="center_vertical" android:paddingStart="@dimen/sp_lg" android:text="⌕   搜索设置" android:textColor="@color/ink_tertiary" android:textSize="@dimen/t_body" />
+<!--
+  页面 4 · 设置
+  =============
+  iOS 内嵌分组列表的形态：小节标题 + 圆角卡片 + 行内
+  图标底板 / 主副文字 / 状态圆点 / 细 chevron。
+  图标与 chevron 均为矢量，随昼夜主题一起换色。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pageSettings"
+    style="@style/PageScroll">
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="权限与隐私" style="@style/TextLabel" />
-        <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
+    <LinearLayout style="@style/PageColumn">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/sp_3xl" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tab_settings"
+            style="@style/TextDisplay" />
+
+        <!-- ═══ 权限与隐私 ═══ -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sp_2xl"
+            android:layout_marginStart="@dimen/sp_sm"
+            android:text="权限与隐私"
+            style="@style/GroupHeader" />
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_sm"
+            style="@style/CardGlass">
+
             <LinearLayout style="@style/InfoRow">
-                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/icon_tile" android:gravity="center" android:text="◌" android:textColor="@color/ac_primary" android:textSize="20sp" />
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/perm_notif_access" style="@style/TextBody" />
-                    <TextView android:id="@+id/tvListener" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/perm_checking" style="@style/TextCaption" />
+                <ImageView
+                    style="@style/IconTile"
+                    android:contentDescription="@string/perm_notif_access"
+                    android:src="@drawable/ic_perm_read"
+                    android:tint="@color/ac_primary" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/sp_md"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/perm_notif_access"
+                        style="@style/TextBody" />
+                    <TextView
+                        android:id="@+id/tvListener"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/perm_checking"
+                        style="@style/TextCaption" />
                 </LinearLayout>
-                <View android:id="@+id/dotNotifAccess" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/sp_md" android:background="@drawable/dot" />
-                <TextView android:id="@+id/btnAccess" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+                <View
+                    android:id="@+id/dotNotifAccess"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="@dimen/sp_md"
+                    android:background="@drawable/dot" />
+                <ImageView
+                    android:id="@+id/btnAccess"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/perm_notif_access"
+                    android:src="@drawable/ic_chevron"
+                    android:tint="@color/ink_tertiary" />
             </LinearLayout>
-            <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/InfoRow">
-                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/icon_tile" android:gravity="center" android:text="◉" android:textColor="@color/ac_primary" android:textSize="18sp" />
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/perm_notif_post" style="@style/TextBody" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/perm_notif_post_hint" style="@style/TextCaption" />
+
+            <LinearLayout
+                android:layout_marginTop="@dimen/sp_sm"
+                style="@style/InfoRow">
+                <ImageView
+                    style="@style/IconTile"
+                    android:contentDescription="@string/perm_notif_post"
+                    android:src="@drawable/ic_perm_notif"
+                    android:tint="@color/ac_primary" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/sp_md"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/perm_notif_post"
+                        style="@style/TextBody" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/perm_notif_post_hint"
+                        style="@style/TextCaption" />
                 </LinearLayout>
-                <View android:id="@+id/dotNotifPost" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/sp_md" android:background="@drawable/dot" />
-                <TextView android:id="@+id/btnPerm" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+                <View
+                    android:id="@+id/dotNotifPost"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="@dimen/sp_md"
+                    android:background="@drawable/dot" />
+                <ImageView
+                    android:id="@+id/btnPerm"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/perm_notif_post"
+                    android:src="@drawable/ic_chevron"
+                    android:tint="@color/ink_tertiary" />
             </LinearLayout>
-            <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/InfoRow">
-                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/icon_tile" android:gravity="center" android:text="⌁" android:textColor="@color/ac_primary" android:textSize="22sp" />
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sp_md" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/perm_a11y" style="@style/TextBody" />
-                    <TextView android:id="@+id/tvA11y" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/perm_a11y_hint" style="@style/TextCaption" />
+
+            <LinearLayout
+                android:layout_marginTop="@dimen/sp_sm"
+                style="@style/InfoRow">
+                <ImageView
+                    style="@style/IconTile"
+                    android:contentDescription="@string/perm_a11y"
+                    android:src="@drawable/ic_perm_reply"
+                    android:tint="@color/ac_primary" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/sp_md"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/perm_a11y"
+                        style="@style/TextBody" />
+                    <TextView
+                        android:id="@+id/tvA11y"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/perm_a11y_hint"
+                        style="@style/TextCaption" />
                 </LinearLayout>
-                <View android:id="@+id/dotA11y" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/sp_md" android:background="@drawable/dot" />
-                <TextView android:id="@+id/btnA11y" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+                <View
+                    android:id="@+id/dotA11y"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="@dimen/sp_md"
+                    android:background="@drawable/dot" />
+                <ImageView
+                    android:id="@+id/btnA11y"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/perm_a11y"
+                    android:src="@drawable/ic_chevron"
+                    android:tint="@color/ink_tertiary" />
             </LinearLayout>
         </LinearLayout>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="@string/sec_connection" style="@style/TextLabel" />
-        <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/retry_count" style="@style/TextBody" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/retry_count_hint" style="@style/TextCaption" />
+        <!-- ═══ 连接 ═══ -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sp_2xl"
+            android:layout_marginStart="@dimen/sp_sm"
+            android:text="@string/sec_connection"
+            style="@style/GroupHeader" />
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_sm"
+            style="@style/CardGlass">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/retry_count"
+                style="@style/TextBody" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/retry_count_hint"
+                style="@style/TextCaption" />
             <EditText
                 android:id="@+id/etRetryCount"
                 android:layout_marginTop="@dimen/sp_md"
@@ -49,11 +197,41 @@
                 style="@style/FieldGlass" />
         </LinearLayout>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/sp_2xl" android:layout_marginStart="@dimen/sp_sm" android:text="应用信息" style="@style/TextLabel" />
-        <LinearLayout android:layout_marginTop="@dimen/sp_sm" style="@style/CardGlass">
-            <LinearLayout android:id="@+id/btnAboutBottom" android:layout_width="match_parent" android:layout_height="60dp" android:background="@drawable/row_glass" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="@dimen/sp_lg" android:paddingEnd="@dimen/sp_lg">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="关于 UniLink" style="@style/TextBody" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/ink_tertiary" android:textSize="32sp" />
+        <!-- ═══ 应用信息 ═══ -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sp_2xl"
+            android:layout_marginStart="@dimen/sp_sm"
+            android:text="应用信息"
+            style="@style/GroupHeader" />
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_sm"
+            style="@style/CardGlass">
+            <LinearLayout
+                android:id="@+id/btnAboutBottom"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@drawable/row_glass"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/sp_lg"
+                android:paddingEnd="@dimen/sp_lg">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="关于 UniLink"
+                    style="@style/TextBody" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="关于 UniLink"
+                    android:src="@drawable/ic_chevron"
+                    android:tint="@color/ink_tertiary" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

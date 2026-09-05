@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  深色主题
+  ========
+  仅覆盖浅色主题中依赖系统外观的条目：背景仍指向同一套
+  drawable（颜色由 values-night 自动切换），状态栏 / 导航栏
+  图标改为浅色。
+-->
+<resources>
+    <style name="Theme.UniLink" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_ambient</item>
+        <item name="android:colorAccent">@color/ac_primary</item>
+        <item name="android:textColorPrimary">@color/ink_primary</item>
+        <item name="android:textColorSecondary">@color/ink_secondary</item>
+        <item name="android:textColorHint">@color/ink_tertiary</item>
+        <!-- 状态栏与导航栏透明：让环境层渐变延伸到屏幕边缘 -->
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:navigationBarColor">@color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

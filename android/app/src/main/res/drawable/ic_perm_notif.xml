@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 权限图标 · 弹出通知：铃铛 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,3.5c-0.77,0 -1.4,0.63 -1.4,1.4v0.5C7.9,6.1 6.2,8.4 6.2,11.1v3.7l-1.5,2c-0.22,0.29 -0.01,0.7 0.35,0.7h13.9c0.36,0 0.57,-0.41 0.35,-0.7l-1.5,-2v-3.7c0,-2.7 -1.7,-5 -4.4,-5.7v-0.5C13.4,4.13 12.77,3.5 12,3.5zM9.8,19.2a2.2,2.2 0 0 0 4.4,0z" />
+</vector>

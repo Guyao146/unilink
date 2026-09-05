@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  主按钮（强调）
-  ==============
-  实色渐变 + 按下泛光。整屏只有一个主按钮 ——
-  Liquid Glass 的原则是控件让位于内容，多个实色按钮会互相争抢注意力。
+  主按钮（强调）· 胶囊形
+  ======================
+  整屏只有一个实色主按钮 —— Liquid Glass 的原则是控件让位于内容，
+  多个实色按钮会互相争抢注意力。胶囊圆角对齐 iOS 26 与澎湃 2 的
+  主操作形态；颜色随昼夜主题自动切换（iOS systemBlue）。
 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="@color/glass_press">
 
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_control" />
+            <corners android:radius="@dimen/r_btn" />
             <solid android:color="@android:color/white" />
         </shape>
     </item>
 
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_control" />
+            <corners android:radius="@dimen/r_btn" />
             <gradient
                 android:angle="270"
                 android:endColor="@color/ac_primary_dim"

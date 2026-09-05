@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UniLink 设计系统 · 色板（深色）
+  ===============================
+  与 values/colors.xml 同名覆盖。深色下玻璃的表达方式相反：
+
+   · 浅色 = 白玻璃叠在亮底上；
+   · 深色 = 低透明白浮在近黑蓝底上，顶缘高光降为 25%，
+     光斑依旧存在但压暗 —— 澎湃夜间模式与 iOS Dark Mode
+     都遵循"材质变暗、层级不变"。
+
+  强调色切换到 iOS 深色系统色（#0A84FF / #30D158 / #FF9F0A / #FF453A），
+  在暗底上有足够对比度。
+-->
+<resources>
+
+    <!-- ── 环境层：深夜蓝，光斑更内敛 ── -->
+    <color name="amb_top">#0C1526</color>
+    <color name="amb_mid">#0F1A2E</color>
+    <color name="amb_bottom">#0A111E</color>
+
+    <color name="amb_glow_cyan">#3312A5E8</color>
+    <color name="amb_glow_cyan_out">#0012A5E8</color>
+    <color name="amb_glow_violet">#2E8F7BFF</color>
+    <color name="amb_glow_violet_out">#008F7BFF</color>
+
+    <!-- ── 玻璃材质：低透明白 + 顶缘高光 ── -->
+    <color name="glass_fill_top">#26FFFFFF</color>
+    <color name="glass_fill_bottom">#14FFFFFF</color>
+    <color name="glass_edge_light">#40FFFFFF</color>
+    <color name="glass_edge_dark">#33000000</color>
+
+    <color name="row_fill">#1FFFFFFF</color>
+    <color name="row_edge">#2BFFFFFF</color>
+
+    <color name="field_fill">#26000000</color>
+    <color name="field_edge">#30FFFFFF</color>
+
+    <color name="glass_press">#24FFFFFF</color>
+    <color name="glass_ripple">#334C8DFF</color>
+
+    <!-- ── 文字 ── -->
+    <color name="ink_primary">#F2F6FC</color>
+    <color name="ink_secondary">#AEBBD0</color>
+    <color name="ink_tertiary">#71809A</color>
+    <color name="ink_on_accent">#FFFFFF</color>
+
+    <!-- ── 强调色：iOS 深色系统色 ── -->
+    <color name="ac_primary">#0A84FF</color>
+    <color name="ac_primary_dim">#0066DE</color>
+    <color name="ac_primary_wash">#330A84FF</color>
+
+    <color name="ac_violet">#9D8CFF</color>
+    <color name="ac_violet_wash">#339D8CFF</color>
+
+    <color name="ac_success">#30D158</color>
+    <color name="ac_success_wash">#2630D158</color>
+    <color name="ac_warn">#FF9F0A</color>
+    <color name="ac_warn_wash">#26FF9F0A</color>
+    <color name="ac_danger">#FF453A</color>
+    <color name="ac_danger_wash">#26FF453A</color>
+
+    <color name="switch_on">#30D158</color>
+    <color name="switch_off">#59787880</color>
+
+    <!-- 悬浮 Dock：深色下压得更实，稳住底部 -->
+    <color name="dock_fill_top">#F2141E31</color>
+    <color name="dock_fill_bottom">#D90E1626</color>
+
+    <color name="log_bg">#F20A1220</color>
+    <color name="log_text">#7FD8A8</color>
+</resources>

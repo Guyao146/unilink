@@ -6,6 +6,7 @@
 
   超大状态字 + 一句说明 + 一个主操作。整页只有 3 个信息单元，
   这是"降低信息密度"最直接的体现 —— 首页不该是控制面板。
+  顶部胶囊是"状态岛"：连接过程持续可见，但不挤占内容区。
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/pageHome"
@@ -24,7 +25,7 @@
             android:text="@string/home_eyebrow"
             android:textColor="@color/ac_primary"
             android:textStyle="bold"
-            android:textSize="@dimen/t_label" />
+            android:textSize="@dimen/t_caption" />
 
         <TextView
             android:layout_width="match_parent"
@@ -33,6 +34,7 @@
             android:text="@string/home_greeting"
             style="@style/TextDisplay" />
 
+        <!-- 状态岛：随连接态整体换色（代码里 Motion.tintText） -->
         <TextView
             android:id="@+id/tvIsland"
             android:layout_width="wrap_content"
@@ -44,7 +46,7 @@
             android:paddingEnd="@dimen/sp_lg"
             android:text="@string/island_idle"
             android:textColor="@color/ink_secondary"
-            android:textSize="@dimen/t_label" />
+            android:textSize="@dimen/t_caption" />
 
         <!-- ═══ 状态卡：整页的主角 ═══ -->
         <LinearLayout
@@ -64,16 +66,16 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/home_status_label"
-                    style="@style/TextLabel" />
+                    style="@style/GroupHeader" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/icon_tile"
+                    android:background="@drawable/status_island"
                     android:paddingStart="@dimen/sp_md"
-                    android:paddingTop="@dimen/sp_xs"
+                    android:paddingTop="6dp"
                     android:paddingEnd="@dimen/sp_md"
-                    android:paddingBottom="@dimen/sp_xs"
+                    android:paddingBottom="6dp"
                     android:text="@string/home_status_caption"
                     android:textColor="@color/ac_primary"
                     android:textSize="@dimen/t_caption" />
@@ -89,8 +91,8 @@
 
                 <View
                     android:id="@+id/dotStatus"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
                     android:layout_marginEnd="@dimen/sp_md"
                     android:background="@drawable/dot" />
 

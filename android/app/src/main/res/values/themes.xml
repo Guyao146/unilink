@@ -7,6 +7,7 @@
       保留平台 Material 主题作为父级（不引入 MaterialComponents）：
       视觉全部由自绘 drawable 承载，用平台主题可避免
       Material 组件默认样式（涟漪色、控件内边距）与之打架。
+      深色变体见 values-night/themes.xml。
     -->
     <style name="Theme.UniLink" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_ambient</item>
@@ -30,6 +31,8 @@
     </style>
 
     <!-- ══════════════ 文字 ══════════════
+         字阶对齐 HIG：Large Title 34 / Title1 28 / Title3 20 /
+         Body 16 / Subhead 14 / Footnote 12。
 
          样式名不用点号分段：Android 会把点号前的部分当作隐式父样式，
          父样式不存在时 AAPT2 直接报错。需要继承时写显式 parent。
@@ -38,7 +41,7 @@
     <style name="TextDisplay">
         <item name="android:textSize">@dimen/t_display</item>
         <item name="android:textColor">@color/ink_primary</item>
-        <item name="android:letterSpacing">-0.03</item>
+        <item name="android:letterSpacing">-0.02</item>
         <item name="android:textStyle">bold</item>
         <item name="android:fontFamily">sans-serif</item>
     </style>
@@ -75,6 +78,14 @@
         <item name="android:textColor">@color/ink_tertiary</item>
     </style>
 
+    <!-- iOS 分组列表的小节标题：短、灰、贴左 -->
+    <style name="GroupHeader">
+        <item name="android:textSize">@dimen/t_caption</item>
+        <item name="android:textColor">@color/ink_tertiary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
     <!-- ══════════════ 控件 ══════════════ -->
 
     <style name="FieldGlass">
@@ -91,6 +102,7 @@
         <item name="android:importantForAutofill">no</item>
     </style>
 
+    <!-- 主按钮：胶囊形，整屏只有一个实色主操作 -->
     <style name="BtnPrimary">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/h_control</item>
@@ -102,25 +114,31 @@
         <item name="android:stateListAnimator">@null</item>
     </style>
 
+    <!-- 次级按钮：胶囊形玻璃 -->
     <style name="BtnGlass">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/h_control</item>
         <item name="android:background">@drawable/btn_glass</item>
         <item name="android:textColor">@color/ink_primary</item>
         <item name="android:textSize">@dimen/t_body</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
 
-    <!-- 开关行：整行 60dp，文字在左、开关在右 -->
+    <!-- 开关行：整行 60dp，文字在左、iOS 胶囊开关在右 -->
     <style name="SwitchRow">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/h_row</item>
         <item name="android:background">@drawable/row_glass</item>
         <item name="android:paddingStart">@dimen/sp_lg</item>
-        <item name="android:paddingEnd">@dimen/sp_md</item>
+        <item name="android:paddingEnd">@dimen/sp_lg</item>
         <item name="android:textSize">@dimen/t_body</item>
         <item name="android:textColor">@color/ink_primary</item>
+        <item name="android:track">@drawable/switch_track</item>
+        <item name="android:thumb">@drawable/switch_thumb</item>
+        <item name="android:showText">false</item>
+        <item name="android:switchMinWidth">48dp</item>
     </style>
 
     <!-- 玻璃卡片容器 -->
@@ -163,7 +181,7 @@
         <item name="android:focusable">true</item>
     </style>
 
-    <!-- 卡片内的信息行：图标底板 + 主副文字 -->
+    <!-- 卡片内的信息行：图标底板 + 主副文字 + 右侧操作 -->
     <style name="InfoRow">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -171,9 +189,17 @@
         <item name="android:background">@drawable/row_glass</item>
         <item name="android:orientation">horizontal</item>
         <item name="android:gravity">center_vertical</item>
-        <item name="android:paddingStart">@dimen/sp_lg</item>
+        <item name="android:paddingStart">@dimen/sp_md</item>
         <item name="android:paddingEnd">@dimen/sp_lg</item>
-        <item name="android:paddingTop">@dimen/sp_md</item>
-        <item name="android:paddingBottom">@dimen/sp_md</item>
+        <item name="android:paddingTop">@dimen/sp_sm</item>
+        <item name="android:paddingBottom">@dimen/sp_sm</item>
+    </style>
+
+    <!-- 权限行左侧的图标底板：着色玻璃小方块 -->
+    <style name="IconTile">
+        <item name="android:layout_width">@dimen/h_icon</item>
+        <item name="android:layout_height">@dimen/h_icon</item>
+        <item name="android:background">@drawable/icon_tile</item>
+        <item name="android:padding">6dp</item>
     </style>
 </resources>

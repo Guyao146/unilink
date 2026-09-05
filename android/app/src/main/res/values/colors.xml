@@ -1,80 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  UniLink 设计系统 · 色板
-  =======================
-  上一版失败在**对比度不足**：环境层太深、玻璃填充太淡（12% 白），
-  结果整屏是一片糊在一起的深蓝灰，卡片边界几乎看不见。
+  UniLink 设计系统 · 色板（浅色）
+  ================================
+  融合两套设计语言的结果：
 
-  这一版按澎湃"柔光玻璃"的实际观感重做：
-   · 环境层抬亮并加大层次，让玻璃有明确可折射的明暗
-   · 玻璃填充提到 ~10~18% 白，卡片边界清晰可辨
-   · 引入**彩色光斑**（青 + 紫）：澎湃的"感知环境色"靠的就是
-     背景里流动的彩色辉光，纯灰背景永远做不出生命感
-   · 强调色改用更饱和的青蓝，在深底上有足够存在感
+   · 澎湃 OS —— 环境层负责"生命感"：淡蓝基底上流动的青 / 紫光斑，
+     让玻璃卡片在屏幕不同位置折射出不同色温（感知环境色）。
+   · iOS —— 控件色全部对齐系统色板：systemBlue / systemGreen /
+     systemOrange / systemRed，用户对"蓝=可点、绿=开启、红=危险"
+     的心智不需要重新学习。
 
+  深色模式见 values-night/colors.xml，两份文件按同名覆盖配对。
   命名：amb_ 环境层 / glass_ 玻璃 / ink_ 文字 / ac_ 强调
 -->
 <resources>
 
     <!-- ── 环境层 ──
-         比上一版整体抬亮约 60%，且顶部与底部差值加大，
-         玻璃卡片才有可折射的明暗梯度 -->
-    <color name="amb_top">#EAF5FF</color>
-    <color name="amb_mid">#DDEAFB</color>
-    <color name="amb_bottom">#F7F9FF</color>
+         顶部微蓝、底部近白：玻璃有可折射的明暗梯度，
+         光斑在浅底上"透"出来而非"盖"上去 -->
+    <color name="amb_top">#E9F2FF</color>
+    <color name="amb_mid">#E2ECFB</color>
+    <color name="amb_bottom">#F6F8FD</color>
 
-    <!-- 彩色光斑：一青一紫，斜向分布。
-         这是"感知环境色"的来源 —— 玻璃在不同位置折射出不同色温 -->
-    <color name="amb_glow_cyan">#7047C9FF</color>
-    <color name="amb_glow_cyan_out">#0047C9FF</color>
-    <color name="amb_glow_violet">#5D9F83FF</color>
-    <color name="amb_glow_violet_out">#009F83FF</color>
+    <!-- 彩色光斑：一青一紫，斜向分布（澎湃"感知环境色"的来源） -->
+    <color name="amb_glow_cyan">#663FA9FF</color>
+    <color name="amb_glow_cyan_out">#003FA9FF</color>
+    <color name="amb_glow_violet">#4D8F7BFF</color>
+    <color name="amb_glow_violet_out">#008F7BFF</color>
 
     <!-- ── 玻璃材质 ──
-         填充提亮到 18%/8%，卡片轮廓明确；
-         描边顶部 55% 白是镜面高光的关键 -->
-    <color name="glass_fill_top">#D9FFFFFF</color>
-    <color name="glass_fill_bottom">#A8F5F8FF</color>
-    <color name="glass_edge_light">#EEFFFFFF</color>
-    <color name="glass_edge_dark">#2B54709E</color>
+         填充 90%→70% 白，卡片轮廓明确；
+         描边顶部近纯白是镜面高光的关键（Liquid Glass 的顶缘反光） -->
+    <color name="glass_fill_top">#E6FFFFFF</color>
+    <color name="glass_fill_bottom">#B3FFFFFF</color>
+    <color name="glass_edge_light">#F2FFFFFF</color>
+    <color name="glass_edge_dark">#2E506B99</color>
 
-    <!-- 行内嵌层：卡片里的每一行有自己的浅玻璃底，
-         这样"一行一件事"才有视觉边界 -->
-    <color name="row_fill">#80FFFFFF</color>
-    <color name="row_edge">#29446480</color>
+    <!-- 行内嵌层：卡片里"一行一件事"的视觉边界 -->
+    <color name="row_fill">#8CFFFFFF</color>
+    <color name="row_edge">#2B446480</color>
 
-    <!-- 输入框：内凹，用暗填充 -->
-    <color name="field_fill">#73EDF3FB</color>
-    <color name="field_edge">#36516E94</color>
+    <!-- 输入框：内凹，顶暗底亮与按钮相反，一眼区分"可点"与"可填" -->
+    <color name="field_fill">#8CEEF3FB</color>
+    <color name="field_edge">#3B516E94</color>
 
     <!-- 点按光效：触点泛起的暖白（澎湃"点按有光"）-->
     <color name="glass_press">#30FFFFFF</color>
-    <color name="glass_ripple">#384C8DFF</color>
+    <color name="glass_ripple">#334C8DFF</color>
 
     <!-- ── 文字 ── -->
-    <color name="ink_primary">#15233A</color>
-    <color name="ink_secondary">#566983</color>
-    <color name="ink_tertiary">#8190A5</color>
+    <color name="ink_primary">#16233C</color>
+    <color name="ink_secondary">#5A6C86</color>
+    <color name="ink_tertiary">#8894A8</color>
     <color name="ink_on_accent">#FFFFFF</color>
 
-    <!-- ── 强调色 ── -->
-    <color name="ac_primary">#287BFF</color>
-    <color name="ac_primary_dim">#1764E7</color>
-    <color name="ac_primary_wash">#254B8DFF</color>
+    <!-- ── 强调色（iOS 系统色 + 澎湃蓝的折中）── -->
+    <color name="ac_primary">#007AFF</color>
+    <color name="ac_primary_dim">#0066DE</color>
+    <color name="ac_primary_wash">#1F007AFF</color>
 
     <color name="ac_violet">#7C62E8</color>
     <color name="ac_violet_wash">#267C62E8</color>
 
-    <color name="ac_success">#1F9D63</color>
-    <color name="ac_success_wash">#261F9D63</color>
-    <color name="ac_warn">#D98A05</color>
-    <color name="ac_warn_wash">#26D98A05</color>
-    <color name="ac_danger">#DA4961</color>
-    <color name="ac_danger_wash">#26DA4961</color>
+    <color name="ac_success">#34C759</color>
+    <color name="ac_success_wash">#1F34C759</color>
+    <color name="ac_warn">#FF9500</color>
+    <color name="ac_warn_wash">#1FFF9500</color>
+    <color name="ac_danger">#FF3B30</color>
+    <color name="ac_danger_wash">#1FFF3B30</color>
 
-    <!-- 悬浮 Dock：比卡片更实，因为它要压住滚动的内容 -->
-    <color name="dock_fill_top">#DBFFFFFF</color>
-    <color name="dock_fill_bottom">#BFF1F6FF</color>
+    <!-- 开关：开启态用 iOS 绿，关闭态用 16% 中性灰 -->
+    <color name="switch_on">#34C759</color>
+    <color name="switch_off">#29787880</color>
+
+    <!-- 悬浮 Dock：比卡片更实，它要压住滚动的内容 -->
+    <color name="dock_fill_top">#E6FFFFFF</color>
+    <color name="dock_fill_bottom">#C2FFFFFF</color>
 
     <!-- 日志：深底衬托等宽文本，明确区别于可操作区域 -->
     <color name="log_bg">#B80E1B2E</color>

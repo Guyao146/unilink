@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  开关 · 滑轨
+  ===========
+  iOS / 澎湃同款胶囊滑轨：开启时填充系统绿（深色下 #30D158），
+  关闭时 16% 中性灰。颜色全部走 color 引用，昼夜自动切换。
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_pill" />
+            <size
+                android:width="48dp"
+                android:height="28dp" />
+            <solid android:color="@color/switch_on" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_pill" />
+            <size
+                android:width="48dp"
+                android:height="28dp" />
+            <solid android:color="@color/switch_off" />
+        </shape>
+    </item>
+</selector>

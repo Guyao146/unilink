@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  次级按钮（玻璃）
-  ================
-  与卡片同构但更小的圆角，填充半透明白。
+  次级按钮（玻璃）· 胶囊形
+  ========================
+  与卡片同构：描边渐变（顶亮底暗）+ 内缩 1dp 的填充渐变，
+  只是把圆角换成胶囊，与主按钮保持同一形态语言。
 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="@color/glass_ripple">
 
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_control" />
+            <corners android:radius="@dimen/r_btn" />
             <solid android:color="@android:color/white" />
         </shape>
     </item>
@@ -18,7 +19,7 @@
         <layer-list>
             <item>
                 <shape android:shape="rectangle">
-                    <corners android:radius="@dimen/r_control" />
+                    <corners android:radius="@dimen/r_btn" />
                     <gradient
                         android:angle="270"
                         android:endColor="@color/glass_edge_dark"
@@ -32,7 +33,7 @@
                 android:right="@dimen/hairline"
                 android:top="@dimen/hairline">
                 <shape android:shape="rectangle">
-                    <corners android:radius="@dimen/r_control" />
+                    <corners android:radius="@dimen/r_btn" />
                     <gradient
                         android:angle="270"
                         android:endColor="@color/glass_fill_bottom"

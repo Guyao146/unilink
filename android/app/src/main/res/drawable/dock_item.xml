@@ -2,19 +2,25 @@
 <!--
   Dock 项目的选中态
   =================
-  选中时浮起一块着色胶囊。用 selector 而非代码改背景，
-  这样按下与选中两种状态能各自独立表达。
+  选中时浮起一块全圆着色胶囊（iOS 26 液态玻璃标签栏同款形态）；
+  按下时轻微点亮，与澎湃"点按有光"呼应。
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_selected="true">
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_icon" />
+            <corners android:radius="@dimen/r_pill" />
             <solid android:color="@color/ac_primary_wash" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/r_pill" />
+            <solid android:color="@color/glass_press" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="@dimen/r_icon" />
+            <corners android:radius="@dimen/r_pill" />
             <solid android:color="@color/transparent" />
         </shape>
     </item>

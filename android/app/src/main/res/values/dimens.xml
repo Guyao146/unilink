@@ -2,23 +2,25 @@
 <!--
   UniLink 设计系统 · 尺度
   =======================
-  这一版的核心是**大幅降低信息密度**，向澎湃 OS 靠：
-   · 标题 34sp —— 超大标题是澎湃的视觉签名
-   · 行高 60dp —— 一行只承载一件事，留白即呼吸
-   · 卡片内边距 20dp、卡片间距 16dp
-   · 圆角整体放大一档 —— 大圆角要配大留白才成立
+  两套语言各取所长：
 
+   · 澎湃 OS —— 超大标题、大圆角、低信息密度、同心圆角。
+   · iOS —— 字阶对齐 HIG（Large Title 34 → Footnote 12），
+     控件端胶囊化（iOS 26 Liquid Glass 的按钮 / Dock 全圆）。
+
+  字阶：34 / 28 / 20 / 16 / 14 / 12 / 10
   圆角遵循同心圆角原则：内层半径 = 外层半径 − 两者间距。
-  例：卡片 r=26dp，内边距 6dp，则内部行 r=20dp。
+  例：卡片 r=26dp，内边距 6dp，则内部行 r=20dp 附近。
 -->
 <resources>
 
     <!-- ── 圆角（同心阶梯）── -->
-    <dimen name="r_sheet">30dp</dimen>
-    <dimen name="r_card">28dp</dimen>
-    <dimen name="r_row">18dp</dimen>
-    <dimen name="r_control">16dp</dimen>
-    <dimen name="r_icon">14dp</dimen>
+    <dimen name="r_sheet">32dp</dimen>
+    <dimen name="r_card">26dp</dimen>
+    <dimen name="r_row">16dp</dimen>
+    <dimen name="r_control">14dp</dimen>
+    <dimen name="r_btn">999dp</dimen>
+    <dimen name="r_icon">12dp</dimen>
     <dimen name="r_inner">12dp</dimen>
     <dimen name="r_pill">999dp</dimen>
 
@@ -31,31 +33,29 @@
     <dimen name="sp_2xl">28dp</dimen>
     <dimen name="sp_3xl">40dp</dimen>
 
-    <dimen name="gutter">18dp</dimen>
-    <dimen name="card_pad">18dp</dimen>
+    <dimen name="gutter">20dp</dimen>
+    <dimen name="card_pad">20dp</dimen>
     <dimen name="card_gap">16dp</dimen>
 
     <!-- 页面底部留白：给悬浮 Dock 让出空间 -->
-    <dimen name="dock_clearance">108dp</dimen>
+    <dimen name="dock_clearance">112dp</dimen>
 
     <dimen name="hairline">1dp</dimen>
 
     <!-- ── 行与控件 ──
-         60dp 行高比 Material 的 48dp 更松，
-         配 20dp 卡片内边距形成"不挤"的观感 -->
+         60dp 行高一行只承载一件事；
+         50dp 控件高配胶囊圆角 = iOS / 澎湃共同的主按钮形态 -->
     <dimen name="h_row">60dp</dimen>
-    <dimen name="h_control">52dp</dimen>
+    <dimen name="h_control">50dp</dimen>
     <dimen name="h_icon">32dp</dimen>
     <dimen name="h_dock">64dp</dimen>
 
-    <!-- ── 字号 ──
-         字阶跨度拉大：34 / 28 / 20 / 15 / 13 / 11。
-         层级靠尺寸差而非细微区分 -->
-    <dimen name="t_display">32sp</dimen>
-    <dimen name="t_hero">30sp</dimen>
+    <!-- ── 字号（HIG 字阶的中文适配）── -->
+    <dimen name="t_display">34sp</dimen>
+    <dimen name="t_hero">28sp</dimen>
     <dimen name="t_title">20sp</dimen>
-    <dimen name="t_body">15sp</dimen>
-    <dimen name="t_label">13sp</dimen>
-    <dimen name="t_caption">11sp</dimen>
+    <dimen name="t_body">16sp</dimen>
+    <dimen name="t_label">14sp</dimen>
+    <dimen name="t_caption">12sp</dimen>
     <dimen name="t_dock">10sp</dimen>
 </resources>

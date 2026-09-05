@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  开关 · 滑块
+  ===========
+  白色圆钮 + 极淡描边：描边只在浅色背景上勾出轮廓，
+  深色模式下几乎不可见，不影响观感。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <size
+        android:width="24dp"
+        android:height="24dp" />
+    <solid android:color="#FFFFFF" />
+    <stroke
+        android:width="0.5dp"
+        android:color="#1A000000" />
+</shape>

@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  页面 5 · 关于
+  =============
+  居中的应用签名（图标 + 名称 + 一句话），下方是
+  iOS 风格的信息分组行。
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/pageAbout"
     style="@style/PageScroll">
 
     <LinearLayout style="@style/PageColumn">
+
         <Space android:layout_width="match_parent" android:layout_height="@dimen/sp_2xl" />
 
         <TextView
             android:id="@+id/btnAboutBack"
             android:layout_width="wrap_content"
-            android:layout_height="44dp"
+            android:layout_height="40dp"
             android:background="@drawable/status_island"
             android:clickable="true"
             android:focusable="true"
@@ -28,8 +35,8 @@
             android:orientation="vertical">
 
             <TextView
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
                 android:background="@drawable/avatar_sakura"
                 android:gravity="center"
                 android:text="S"
@@ -110,12 +117,12 @@
                     android:textColor="@color/ac_primary"
                     android:textSize="@dimen/t_body" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="@color/ink_tertiary"
-                    android:textSize="32sp" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="官方网站"
+                    android:src="@drawable/ic_chevron"
+                    android:tint="@color/ac_primary" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

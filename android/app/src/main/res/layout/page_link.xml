@@ -3,7 +3,8 @@
   页面 2 · 连接
   =============
   账号（扫码登录）与中继服务器两件事，各一张卡。
-  输入框之间给足 12dp 间距 —— 上一版挤在一起是密度过高的元凶之一。
+  输入框之间 12dp 间距；内凹玻璃与胶囊按钮的明暗方向相反，
+  一眼区分"可点"与"可填"。
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/pageLink"

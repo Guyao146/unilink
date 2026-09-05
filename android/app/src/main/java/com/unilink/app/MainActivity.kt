@@ -27,6 +27,7 @@ import com.unilink.app.auth.QrTicket
 import com.unilink.app.auth.ScanLoginActivity
 import com.unilink.app.ui.LogView
 import com.unilink.app.ui.Motion
+import com.unilink.app.ui.SwipePageHost
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
@@ -85,6 +86,7 @@ class MainActivity : AppCompatActivity() {
     /** 四个页面与对应的 Dock 项，索引一一对应 */
     private lateinit var pages: List<View>
     private lateinit var tabs: List<ViewGroup>
+    private lateinit var pageHost: SwipePageHost
     private lateinit var dock: View
     private lateinit var dockIndicator: View
     private var currentTab = 0
@@ -249,6 +251,12 @@ class MainActivity : AppCompatActivity() {
             findViewById(R.id.tabSync),
             findViewById(R.id.tabSettings)
         )
+        pageHost = findViewById(R.id.pageHost)
+        pageHost.swipePageCount = tabs.size
+        pageHost.onSwipePage = { index ->
+            // 回调已经发生在动画结束时；只同步 Dock，不再次触发页面动画
+            selectTab(index, animate = false, fromSwipe = true)
+        }
         dock = findViewById(R.id.dock)
         dockIndicator = findViewById(R.id.dockIndicator)
         dockIndicator.isSelected = true
@@ -358,17 +366,26 @@ class MainActivity : AppCompatActivity() {
         selectTab(0, animate = false)
     }
 
-    private fun selectTab(index: Int, animate: Boolean = true) {
+    private fun selectTab(index: Int, animate: Boolean = true, fromSwipe: Boolean = false) {
+        if (index !in tabs.indices) return
         currentTab = index
         showingAbout = false
         dock.visibility = View.VISIBLE
-        pages.forEachIndexed { i, page ->
-            page.visibility = if (i == index) View.VISIBLE else View.GONE
+
+        if (!fromSwipe) {
+            val direction = if (index >= pageHost.currentPage) -1 else 1
+            pageHost.showPage(index, animate = animate, direction = direction)
         }
+
+        updateDockSelection(index)
+        moveDockIndicator(index, animate)
+    }
+
+    private fun updateDockSelection(index: Int) {
         tabs.forEachIndexed { i, tab ->
             val on = i == index
             tab.isSelected = on
-            // 选中项图标与文字提亮，未选中降到次级色 —— 靠明暗而非填充块区分
+            // 选中项提亮，未选中项退到次级色，不使用沉重的实色块
             val color = getColor(if (on) R.color.ac_primary else R.color.ink_tertiary)
             for (j in 0 until tab.childCount) {
                 when (val child = tab.getChildAt(j)) {
@@ -377,15 +394,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        if (animate) {
-            val page = pages[index]
-            page.alpha = 0f
-            page.translationY = 16f
-            page.animate().alpha(1f).translationY(0f)
-                .setDuration(280L).setInterpolator(Motion.SNAPPY).start()
-            enterCards(page)
-        }
-        moveDockIndicator(index, animate)
     }
 
     /** Dock 选中底板在项目间连续滑动，而非突兀地逐项切换。 */

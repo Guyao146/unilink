@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UniLink · 发布页 — 让设备之间，自然流动</title>
+<meta name="description" content="UniLink 安卓版发布页：下载最新 APK，逐版本查看更新详情。通知、剪贴板与文件在你授权后，于手机与电脑之间端到端加密流转。">
+<meta property="og:title" content="UniLink · 发布页 — 让设备之间，自然流动">
+<meta property="og:description" content="通知、剪贴板与文件的端到端加密互联。下载最新 APK，逐版本查看更新详情。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://github.com/Guyao146/unilink">
+
+<!-- 主题预置：避免深色模式闪白。逻辑与页尾主脚本一致 -->
+<script>
+(function () {
+  var t = localStorage.getItem('unilink-theme');
+  if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+
+<!--
+  ══════════════════════════════════════════════
+  UniLink 发布页
+  · 站头直接引用 https://api.mcylyr.cn/h5/header.html
+    （同源部署时注入其原始 HTML，跨域时回退 iframe，见 loadHeader()）
+  · 版本列表在页面底部 <script> 的 RELEASES 数组中维护，
+    每个版本的详情均可独立展开 / 收起
+  · GITHUB_URL 已指向 GitHub 仓库；DOWNLOAD_URL 可改为 APK 直链
+  ══════════════════════════════════════════════
+-->
+
+<style>
+/* ══════════════ 设计令牌 ══════════════
+   与安卓端 values/colors.xml 同源：
+   浅色 = 白玻璃叠在亮底；深色 = 低透明白浮在近黑蓝底 */
+:root {
+  --header-h: 100px;             /* header.html 自身设计高度（100px），可按需调整 */
+  --sticky-top: 100px;           /* 页签吸附位置：随站头收窄在 100px ↔ 60px 间过渡 */
+  --bg-top: #E9F2FF;
+  --bg-bottom: #F6F8FD;
+  --ink-1: #16233C;
+  --ink-2: #5A6C86;
+  --ink-3: #8894A8;
+  --glass: rgba(255, 255, 255, .66);
+  --glass-strong: rgba(255, 255, 255, .82);
+  --glass-row: rgba(255, 255, 255, .55);
+  --edge: rgba(80, 107, 153, .20);
+  --edge-hi: rgba(255, 255, 255, .9);
+  --accent: #007AFF;
+  --accent-2: #0066DE;
+  --accent-wash: rgba(0, 122, 255, .12);
+  --green: #34C759;
+  --violet: #7C62E8;
+  --danger: #FF3B30;
+  --shadow: 0 10px 30px rgba(22, 35, 60, .10);
+  --shadow-lg: 0 18px 48px rgba(22, 35, 60, .14);
+  --blob-cyan: rgba(63, 169, 255, .40);
+  --blob-violet: rgba(143, 123, 255, .30);
+}
+[data-theme="dark"] {
+  --bg-top: #0C1526;
+  --bg-bottom: #0A111E;
+  --ink-1: #F2F6FC;
+  --ink-2: #AEBBD0;
+  --ink-3: #71809A;
+  --glass: rgba(255, 255, 255, .07);
+  --glass-strong: rgba(20, 30, 49, .88);
+  --glass-row: rgba(255, 255, 255, .06);
+  --edge: rgba(255, 255, 255, .14);
+  --edge-hi: rgba(255, 255, 255, .18);
+  --accent: #0A84FF;
+  --accent-2: #0066DE;
+  --accent-wash: rgba(10, 132, 255, .20);
+  --green: #30D158;
+  --violet: #9D8CFF;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, .45);
+  --blob-cyan: rgba(18, 165, 232, .22);
+  --blob-violet: rgba(143, 123, 255, .18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "MiSans", "HarmonyOS Sans SC", -apple-system, "PingFang SC",
+               "Microsoft YaHei UI", "Segoe UI", sans-serif;
+  color: var(--ink-1);
+  background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+  min-height: 100vh;
+  padding-top: var(--header-h);   /* 顶部让位给固定站头 */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--accent-wash); }
+
+/* ══════════════ 外部站头（直接引用 api.mcylyr.cn/h5/header.html）══════════════
+   该 header 是"白字悬浮"设计（透明底、滚动后变深色实底、高度 100px）。
+   两种加载路径，由页尾 loadHeader() 自动选择：
+   · 同源部署（页面放在 api.mcylyr.cn 下）：fetch 原文件注入页面 ——
+     编码可控（原文件无 charset 声明）、下拉菜单不裁剪、滚动收窄原行为生效；
+   · 其它来源（CORS 不放行跨域读取）：退回 <iframe> 直接引用。
+   两种路径都垫一层深色玻璃底，保证浅色主题下白字导航可读。 */
+#siteHeaderHost { display: none; }
+body.header-injected #siteHeaderHost { display: block; }
+
+/* 注入模式：强制深色玻璃底（原文件顶部为透明底，浅色页面上白字不可读） */
+body.header-injected .u-x-portal-v3-root {
+  background: rgba(8, 11, 18, .88) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(0, 243, 255, .22);
+}
+/* 注入模式下滚动时 header 收窄为 60px（其自带脚本监听本页滚动），
+   页签吸附位置随之同步 —— 由 loadHeader() 注入的滚动监听切换 header-scrolled */
+body.header-injected .tabs-rail { top: var(--sticky-top); transition: top .4s ease; }
+body.header-injected.header-scrolled { --sticky-top: 60px; }
+
+/* iframe 回退模式：同样垫深色玻璃底 */
+.site-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 60;
+  height: var(--header-h);
+  display: none;
+  background: rgba(8, 11, 18, .88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(0, 243, 255, .22), 0 6px 24px rgba(0, 0, 0, .25);
+}
+body.header-frame .site-header { display: block; }
+.site-header iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ══════════════ 环境光斑（澎湃"感知环境色"）══════════════ */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  transition: opacity .6s ease;
+}
+.blob-cyan {
+  width: 560px; height: 560px;
+  left: -160px; top: -180px;
+  background: radial-gradient(circle, var(--blob-cyan), transparent 70%);
+}
+.blob-violet {
+  width: 620px; height: 620px;
+  right: -200px; bottom: -220px;
+  background: radial-gradient(circle, var(--blob-violet), transparent 70%);
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+
+/* ══════════════ Hero ══════════════ */
+.hero { padding: 64px 0 30px; text-align: center; }
+.app-icon {
+  width: 92px; height: 92px;
+  border-radius: 24px;
+  margin: 0 auto 18px;
+  background: linear-gradient(160deg, #17233C, #0E1828);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, .16);
+  display: grid; place-items: center;
+  animation: rise .6s cubic-bezier(.22, 1, .36, 1) both;
+}
+.hero h1 {
+  font-size: clamp(30px, 5vw, 42px);
+  letter-spacing: -.02em;
+  animation: rise .6s .06s cubic-bezier(.22, 1, .36, 1) both;
+}
+.tagline {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font-size: 16px;
+  animation: rise .6s .12s cubic-bezier(.22, 1, .36, 1) both;
+}
+.badges {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin-top: 18px;
+  animation: rise .6s .18s cubic-bezier(.22, 1, .36, 1) both;
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 14px;
+  border-radius: 999px;
+  background: var(--glass-row);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--edge-hi);
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+.actions {
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+  margin-top: 26px;
+  animation: rise .6s .24s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+/* ══════════════ 胶囊按钮（iOS / 澎湃 形态）══════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  height: 48px; padding: 0 24px;
+  border-radius: 999px;
+  font-size: 15px; font-weight: 600;
+  text-decoration: none; cursor: pointer; border: 0;
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1), box-shadow .25s ease,
+              background-color .45s ease, color .45s ease, border-color .45s ease;
+}
+.btn:active { transform: scale(.97); }          /* 对齐安卓端 Motion.press */
+.btn svg { width: 18px; height: 18px; }
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 22px rgba(0, 110, 255, .35);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0, 110, 255, .42); }
+.btn-ghost {
+  color: var(--ink-1);
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--edge-hi), var(--shadow);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.btn-ghost:hover { transform: translateY(-2px); }
+
+/* ══════════════ 页签（Dock 式滑动指示器）═════════════ */
+.tabs-rail { position: sticky; top: var(--header-h); z-index: 40; padding: 14px 0 10px; }
+.tabs {
+  position: relative;
+  display: flex; width: max-content; max-width: 100%;
+  margin: 0 auto;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--edge-hi), var(--shadow);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.tab {
+  position: relative; z-index: 1;
+  height: 40px; padding: 0 20px;
+  border: 0; background: none; cursor: pointer;
+  border-radius: 999px;
+  font-size: 14px; font-weight: 600; font-family: inherit;
+  color: var(--ink-3);
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: color .3s ease;
+  white-space: nowrap;
+}
+.tab svg { width: 16px; height: 16px; }
+.tab.on { color: var(--accent); }
+.tab-indicator {
+  position: absolute; top: 6px; left: 0;
+  height: 40px; width: 0;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  box-shadow: inset 0 1px 0 var(--edge-hi);
+  transition: transform .36s cubic-bezier(.22, 1, .36, 1),
+              width .36s cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ══════════════ 面板切换动画 ══════════════ */
+.panel { display: none; padding-bottom: 30px; }
+.panel.active { display: block; animation: panelIn .42s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+/* 面板内卡片随面板浮现，错开 60ms —— 对齐安卓端 enterCards */
+.panel.active .reveal { animation: rise .55s cubic-bezier(.22, 1, .36, 1) both; }
+.panel.active .reveal:nth-child(1) { animation-delay: .05s; }
+.panel.active .reveal:nth-child(2) { animation-delay: .11s; }
+.panel.active .reveal:nth-child(3) { animation-delay: .17s; }
+.panel.active .reveal:nth-child(4) { animation-delay: .23s; }
+.panel.active .reveal:nth-child(5) { animation-delay: .29s; }
+.panel.active .reveal:nth-child(n+6) { animation-delay: .35s; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ══════════════ 玻璃卡片 ══════════════ */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 var(--edge-hi), var(--shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  padding: 22px;
+  transition: background-color .45s ease, border-color .45s ease,
+              box-shadow .45s ease, transform .25s cubic-bezier(.22, 1, .36, 1);
+}
+.card:hover { transform: translateY(-3px); box-shadow: inset 0 1px 0 var(--edge-hi), var(--shadow-lg); }
+
+.sec-title { font-size: 21px; letter-spacing: -.01em; margin: 26px 0 14px; }
+.sec-title small { color: var(--ink-3); font-size: 13px; font-weight: 400; margin-left: 8px; }
+
+/* 功能网格 */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.feature .ico {
+  width: 42px; height: 42px;
+  border-radius: 13px;
+  display: grid; place-items: center;
+  background: var(--accent-wash);
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.feature .ico svg { width: 22px; height: 22px; }
+.feature h3 { font-size: 15.5px; margin-bottom: 6px; }
+.feature p { font-size: 13.5px; line-height: 1.65; color: var(--ink-2); }
+
+/* ══════════════ 版本列表（可展开 / 收起）═════════════ */
+.ver {
+  border-radius: 22px;
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--edge-hi), var(--shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  overflow: hidden;
+  transition: background-color .45s ease, border-color .45s ease, box-shadow .45s ease;
+}
+.ver + .ver { margin-top: 12px; }
+.ver-head {
+  width: 100%;
+  display: flex; align-items: center; gap: 14px;
+  padding: 17px 20px;
+  background: none; border: 0; cursor: pointer;
+  font-family: inherit; text-align: left; color: inherit;
+  transition: background-color .2s ease;
+}
+.ver-head:hover { background: var(--glass-row); }
+.ver-pill {
+  flex: none;
+  min-width: 74px;
+  height: 34px; padding: 0 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  font-size: 14px; font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+.ver-meta { flex: 1; min-width: 0; }
+.ver-meta b { display: block; font-size: 15px; }
+.ver-meta span { display: block; margin-top: 2px; font-size: 12.5px; color: var(--ink-3); }
+.ver-latest {
+  flex: none;
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: var(--green);
+  border-radius: 999px; padding: 4px 10px;
+}
+.ver-arrow { flex: none; width: 20px; height: 20px; color: var(--ink-3); transition: transform .4s cubic-bezier(.22, 1, .36, 1); }
+.ver.open .ver-arrow { transform: rotate(180deg); }
+
+/* 展开动画：grid-rows 0fr→1fr，无需 JS 测高 */
+.ver-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .42s cubic-bezier(.22, 1, .36, 1); }
+.ver.open .ver-body { grid-template-rows: 1fr; }
+.ver-inner { overflow: hidden; min-height: 0; }
+.ver-detail { padding: 4px 20px 20px; }
+.notes { list-style: none; }
+.notes li {
+  position: relative;
+  padding: 7px 0 7px 26px;
+  font-size: 14px; line-height: 1.6; color: var(--ink-2);
+  border-top: 1px dashed var(--edge);
+}
+.notes li:first-child { border-top: 0; }
+.notes li::before {
+  content: "";
+  position: absolute; left: 4px; top: 15px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  opacity: .75;
+}
+.notes li.plus::before { background: var(--green); }
+.notes li.fix::before { background: var(--danger); }
+.ver-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.mini-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  color: var(--accent);
+  background: var(--glass-row);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--edge-hi);
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1), background-color .3s ease;
+}
+.mini-link:hover { transform: translateY(-2px); }
+.mini-link svg { width: 15px; height: 15px; }
+
+/* ══════════════ 关于面板 ══════════════ */
+.about-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; align-items: stretch; }
+@media (max-width: 760px) { .about-grid { grid-template-columns: 1fr; } }
+.about-rows { padding: 6px 0; }
+.row-item {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 56px;
+  padding: 8px 16px;
+  border-radius: 16px;
+  background: var(--glass-row);
+  border: 1px solid var(--edge);
+  color: inherit; text-decoration: none;
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1), background-color .3s ease;
+}
+.row-item:hover { transform: translateX(3px); }
+.row-item + .row-item { margin-top: 8px; }
+.row-item .ico {
+  flex: none; width: 34px; height: 34px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  background: var(--accent-wash); color: var(--accent);
+}
+.row-item .ico svg { width: 18px; height: 18px; }
+.row-item .txt { flex: 1; min-width: 0; }
+.row-item .txt b { display: block; font-size: 14.5px; }
+.row-item .txt span { display: block; margin-top: 1px; font-size: 12px; color: var(--ink-3); }
+.row-item .chev { flex: none; width: 16px; height: 16px; color: var(--ink-3); }
+.quote { font-size: 14px; line-height: 1.8; color: var(--ink-2); }
+.quote b { color: var(--ink-1); }
+
+/* ══════════════ 页脚 ══════════════ */
+footer {
+  border-top: 1px solid var(--edge);
+  margin-top: 30px;
+  padding: 26px 0 34px;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.9;
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* ══════════════ 主题切换浮钮 ══════════════ */
+.theme-toggle {
+  position: fixed; right: 18px; bottom: 20px; z-index: 70;
+  width: 48px; height: 48px;
+  border-radius: 999px; border: 1px solid var(--edge);
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 var(--edge-hi), var(--shadow-lg);
+  cursor: pointer;
+  display: grid; place-items: center;
+  color: var(--ink-1);
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1), background-color .45s ease;
+}
+.theme-toggle:hover { transform: translateY(-2px); }
+.theme-toggle:active { transform: scale(.94); }
+.theme-toggle svg { width: 21px; height: 21px; }
+html[data-theme="dark"] .icon-sun { display: block; }
+html[data-theme="dark"] .icon-moon { display: none; }
+html:not([data-theme="dark"]) .icon-sun { display: none; }
+html:not([data-theme="dark"]) .icon-moon { display: block; }
+
+/* 全局配色过渡（主题切换动画） */
+body, .card, .ver, .chip, .btn-ghost, .tabs, .tab, .theme-toggle,
+.site-header, .mini-link, .row-item, footer {
+  transition-property: background-color, color, border-color, box-shadow, background;
+  transition-duration: .45s;
+}
+
+@media (max-width: 560px) {
+  .hero { padding-top: 44px; }
+  .ver-head { padding: 15px 16px; gap: 10px; }
+  .ver-detail { padding: 4px 16px 18px; }
+  .ver-latest { display: none; }
+  .btn { padding: 0 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ═══ 站头：直接引用 https://api.mcylyr.cn/h5/header.html ═══
+     加载策略见页尾 loadHeader()：同源注入（最佳效果），跨域回退 iframe -->
+<div id="siteHeaderHost"></div>
+<div class="site-header">
+  <iframe id="siteHeaderFrame" title="站点导航" scrolling="no" loading="eager"></iframe>
+</div>
+
+<!-- ═══ 环境光斑 ═══ -->
+<div class="ambient" aria-hidden="true">
+  <i class="blob blob-cyan"></i>
+  <i class="blob blob-violet"></i>
+</div>
+
+<!-- ═══ Hero ═══ -->
+<section class="hero wrap">
+  <div class="app-icon" aria-hidden="true">
+    <!-- 应用图标：两点一线（与安卓端 ic_launcher 同源） -->
+    <svg width="52" height="52" viewBox="0 0 108 108" fill="none">
+      <defs>
+        <linearGradient id="lg-arc" x1="34" y1="70" x2="74" y2="38" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#3D9AAB"/><stop offset="1" stop-color="#6EE7F9"/>
+        </linearGradient>
+      </defs>
+      <path d="M34,70 C34,46 74,62 74,38" stroke="url(#lg-arc)" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="34" cy="70" r="9" fill="#6EE7F9"/>
+      <circle cx="74" cy="38" r="9" fill="#F3F6FB"/>
+    </svg>
+  </div>
+
+  <h1>UniLink</h1>
+  <p class="tagline">让设备之间，自然流动 —— 通知、剪贴板与文件，在你授权后安全流转</p>
+
+  <div class="badges">
+    <span class="chip"><i class="dot"></i><span id="chipVersion">v1.0.8 · versionCode 8</span></span>
+    <span class="chip">Android 7.0+</span>
+    <span class="chip">AES-256-GCM 端到端加密</span>
+    <span class="chip">服务器只转发密文</span>
+  </div>
+
+  <div class="actions">
+    <a id="btnDownload" class="btn btn-primary" href="#" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m6 11 6 6 6-6"/><path d="M5 20h14"/></svg>
+      下载最新版 APK
+    </a>
+    <a id="btnGithub" class="btn btn-ghost" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub 仓库
+    </a>
+    <a id="btnProject" class="btn btn-ghost" href="https://mcylyr.cn" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.7 2.6 4 5.6 4 9s-1.3 6.4-4 9c-2.7-2.6-4-5.6-4-9s1.3-6.4 4-9z"/></svg>
+      原项目官网
+    </a>
+  </div>
+</section>
+
+<!-- ═══ 页签 ═══ -->
+<div class="tabs-rail wrap">
+  <nav class="tabs" id="tabs" role="tablist" aria-label="内容分区">
+    <span class="tab-indicator" id="tabIndicator" aria-hidden="true"></span>
+    <button class="tab on" role="tab" aria-selected="true" data-panel="panel-features">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2.2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2.2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2.2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.2"/></svg>
+      功能亮点
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="panel-releases">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v16.2a.8.8 0 0 1-1.3.62L12 17.6l-5.7 3.22A.8.8 0 0 1 5 20.2V4a1 1 0 0 1 1-1z"/></svg>
+      更新日志
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="panel-about">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.4"/><circle cx="12" cy="7.6" r="1.15" fill="currentColor" stroke="none"/></svg>
+      关于项目
+    </button>
+  </nav>
+</div>
+
+<main class="wrap">
+
+  <!-- ═══ 面板 1 · 功能亮点 ═══ -->
+  <section class="panel active" id="panel-features" role="tabpanel">
+    <h2 class="sec-title">功能亮点 <small>与桌面端协同的完整能力</small></h2>
+    <div class="features">
+      <div class="card feature reveal">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5c-.7 0-1.25.56-1.25 1.25v.53C8.4 6.9 7 8.8 7 11v3.6l-1.4 1.87c-.2.27-.01.66.33.66h12.14c.34 0 .53-.39.33-.66L17 14.6V11c0-2.2-1.4-4.1-3.75-4.72v-.53C13.25 5.06 12.7 4.5 12 4.5z"/><path d="M9.9 18.5a2.1 2.1 0 0 0 4.2 0"/></svg></span>
+        <h3>通知双向同步</h3>
+        <p>手机通知实时镜像到电脑；电脑的消息也能以系统通知抵达手机，不漏任何一条。</p>
+      </div>
+      <div class="card feature reveal">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="12" height="16" rx="2.5"/><path d="M12 4V3a1.6 1.6 0 0 1 1.6-1.6h.8A1.6 1.6 0 0 1 16 3v1"/><path d="M5 8H4a1 1 0 0 0-1 1v10a2 2 0 0 0 2 2h6"/></svg></span>
+        <h3>剪贴板互通</h3>
+        <p>一键把剪贴板发送到电脑，也能自动接收电脑端复制的文本，跨设备粘贴零摩擦。</p>
+      </div>
+      <div class="card feature reveal">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></span>
+        <h3>扫码登录</h3>
+        <p>相机扫描电脑屏幕上的二维码，即可在接入 authentik 的项目中一键登录网页。</p>
+      </div>
+      <div class="card feature reveal">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.6 3 8.4 7 9.8 4-1.4 7-5.2 7-9.8V6l-7-3z"/><path d="m9 12 2 2 4-4.5"/></svg></span>
+        <h3>端到端加密</h3>
+        <p>由房间码与令牌派生密钥，AES-256-GCM 全程加密，中继服务器只接触密文。</p>
+      </div>
+      <div class="card feature reveal">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 4v5h5"/></svg></span>
+        <h3>文件传输</h3>
+        <p>图片、文档、任意文件在手机与电脑之间直接流转，无需数据线与网盘中转。</p>
+      </div>
+      <div class="card feature reveal">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4C7.6 4 4 7.1 4 11c0 2.1 1 4 2.6 5.3L6 20.5l4-1.7c.6.1 1.3.2 2 .2 4.4 0 8-3.1 8-7s-3.6-8-8-8z"/><path d="M10.9 8.1 7.6 11l3.3 2.9v-1.8c1.9 0 3.4.6 4.5 2"/></svg></span>
+        <h3>电脑回复手机通知</h3>
+        <p>可选的无障碍服务，让电脑端回复自动填入并发送，双手不必离开键盘。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 面板 2 · 更新日志（JS 渲染）═══ -->
+  <section class="panel" id="panel-releases" role="tabpanel">
+    <h2 class="sec-title">更新日志 <small>点击任意版本展开 / 收起详情</small></h2>
+    <div id="verList"></div>
+  </section>
+
+  <!-- ═══ 面板 3 · 关于项目 ═══ -->
+  <section class="panel" id="panel-about" role="tabpanel">
+    <h2 class="sec-title">关于项目 <small>开源 · 自托管 · 无追踪</small></h2>
+    <div class="about-grid">
+      <div class="card reveal">
+        <p class="quote">
+          <b>UniLink</b> 是一款让手机和电脑轻松协作的互联工具：通知镜像、剪贴板互通、文件传输与扫码登录。
+          通信经 <b>AES-256-GCM 端到端加密</b>，中继服务器只转发密文；
+          项目采用自托管中继，你可以完全掌控自己的数据。
+        </p>
+        <p class="quote" style="margin-top:12px">
+          设计语言上，我们希望它像系统的一部分：<b>澎湃 OS 的柔光玻璃与悬浮框架</b>，
+          加上 <b>iOS 的系统色与克制排版</b>，让工具退到内容之后。
+        </p>
+      </div>
+      <div class="card about-rows reveal">
+        <a class="row-item" id="rowGithub" href="#" target="_blank" rel="noopener">
+          <span class="ico"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></span>
+          <span class="txt"><b>GitHub 仓库</b><span>查看源码 · 提 Issue · 获取全部 Release</span></span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.5 6.5 6.5L9 18.5"/></svg>
+        </a>
+        <a class="row-item" href="https://mcylyr.cn" target="_blank" rel="noopener">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.7 2.6 4 5.6 4 9s-1.3 6.4-4 9c-2.7-2.6-4-5.6-4-9s1.3-6.4 4-9z"/></svg></span>
+          <span class="txt"><b>原项目官网</b><span>mcylyr.cn — 与 App 内「官方网站」同源</span></span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.5 6.5 6.5L9 18.5"/></svg>
+        </a>
+        <a class="row-item" href="https://api.mcylyr.cn/h5/header.html" target="_blank" rel="noopener">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/><path d="M6.5 6.5h.01M9.5 6.5h.01"/></svg></span>
+          <span class="txt"><b>本页站头</b><span>api.mcylyr.cn/h5/header.html（直接引用）</span></span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.5 6.5 6.5L9 18.5"/></svg>
+        </a>
+        <div class="row-item" style="cursor:default">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"/><path d="M4.8 20c.9-3.6 3.8-5.6 7.2-5.6s6.3 2 7.2 5.6"/></svg></span>
+          <span class="txt"><b>作者</b><span>SakuraGu</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>
+    UniLink · 手机与电脑互联助手 · 由 <a href="https://mcylyr.cn" target="_blank" rel="noopener">SakuraGu</a> 开发维护<br>
+    <span id="footerLinks"></span>
+  </p>
+</footer>
+
+<!-- ═══ 主题切换浮钮 ═══ -->
+<button class="theme-toggle" id="themeToggle" aria-label="切换深色 / 浅色模式" title="切换深色 / 浅色模式">
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6a8.6 8.6 0 1 0 10.6 10.6z"/></svg>
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7"/></svg>
+</button>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   站点配置：按实际情况修改这三个地址即可
+   ═══════════════════════════════════════════════════════ */
+const GITHUB_URL   = "https://github.com/Guyao146/unilink";   // GitHub 仓库
+const DOWNLOAD_URL = GITHUB_URL + "/releases/latest";         // 最新版 APK（可改为直链）
+const PROJECT_URL  = "https://mcylyr.cn";                     // 原项目官网
+
+/* ═══ 版本发布记录：新版本直接往数组头部追加 ═══
+   type: plus=新增  fix=修复  支持任意文字前缀 */
+const RELEASES = [
+  {
+    v: "1.0.8", code: 8, date: "2026-09-04", latest: true,
+    title: "固定签名与构建链完善",
+    notes: [
+      { type: "plus", text: "固定 debug 签名：任何电脑构建的 APK 均可覆盖安装，不再反复卸载重装" },
+      { type: "plus", text: "扫码服务地址安全校验：必须 https（局域网 http 可用），防止令牌明文过网" },
+      { type: "fix",  text: "CI 构建自动还原签名文件，云端产物与本地签名一致" },
+    ],
+  },
+  {
+    v: "1.0.7", code: 7, date: "2026-08-22",
+    title: "扫码登录 authentik",
+    notes: [
+      { type: "plus", text: "OIDC + PKCE 账号登录：跳系统浏览器完成授权，回调 state 全程校验" },
+      { type: "plus", text: "扫码登录网页：相机读取电脑屏幕二维码，确认后即完成站点登录" },
+      { type: "plus", text: "登录令牌加密存于本机安全存储，退出登录即清除" },
+    ],
+  },
+  {
+    v: "1.0.5", code: 5, date: "2026-08-10",
+    title: "端到端加密",
+    notes: [
+      { type: "plus", text: "房间码 + 令牌派生密钥，AES-256-GCM 全链路加密，服务器只见密文" },
+      { type: "plus", text: "失败重试次数可在设置中配置，0 表示无限重连" },
+      { type: "fix",  text: "弱网下 WebSocket 重连风暴" },
+    ],
+  },
+  {
+    v: "1.0.3", code: 3, date: "2026-07-30",
+    title: "通知与剪贴板互通",
+    notes: [
+      { type: "plus", text: "通知同步：手机通知实时镜像到电脑" },
+      { type: "plus", text: "电脑回复手机通知：无障碍服务自动填写并发送（可选开启）" },
+      { type: "plus", text: "剪贴板双向：一键发送本机剪贴板，自动接收电脑端复制内容" },
+    ],
+  },
+  {
+    v: "1.0.1", code: 1, date: "2026-07-18",
+    title: "首个公开版本",
+    notes: [
+      { type: "plus", text: "WebSocket 直连中继服务器，前台服务常驻保持连接" },
+      { type: "plus", text: "设备名自定义，连接状态一目了然" },
+      { type: "plus", text: "澎湃 OS × iOS 设计语言的玻璃界面首发" },
+    ],
+  },
+];
+
+/* ═══ 渲染版本列表 ═══ */
+(function renderReleases() {
+  const list = document.getElementById('verList');
+  list.innerHTML = RELEASES.map((r, i) => `
+    <article class="ver reveal${i === 0 ? ' open' : ''}" style="--i:${i}">
+      <button class="ver-head" aria-expanded="${i === 0}">
+        <span class="ver-pill">v${r.v}</span>
+        <span class="ver-meta">
+          <b>${r.title}</b>
+          <span>${r.date} · versionCode ${r.code}</span>
+        </span>
+        ${r.latest ? '<span class="ver-latest">最新</span>' : ''}
+        <svg class="ver-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="ver-body">
+        <div class="ver-inner">
+          <div class="ver-detail">
+            <ul class="notes">
+              ${r.notes.map(n => `<li class="${n.type}">${n.text}</li>`).join('')}
+            </ul>
+            <div class="ver-links">
+              <a class="mini-link" href="${GITHUB_URL}/releases/tag/v${r.v}" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m6 11 6 6 6-6"/></svg>
+                下载 v${r.v}
+              </a>
+              ${RELEASES[i + 1] ? `<a class="mini-link" href="${GITHUB_URL}/compare/v${RELEASES[i + 1].v}...v${r.v}" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v12"/><path d="m4 11 4 4 4-4"/><path d="M16 21V9"/><path d="m12 13 4-4 4 4"/></svg>
+                查看代码变更
+              </a>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>`).join('');
+
+  /* 展开 / 收起：每个版本独立，互不影响 */
+  list.addEventListener('click', (e) => {
+    const head = e.target.closest('.ver-head');
+    if (!head) return;
+    const ver = head.parentElement;
+    const open = ver.classList.toggle('open');
+    head.setAttribute('aria-expanded', open);
+  });
+})();
+
+/* ═══ 页签切换（Dock 式滑动指示器 + 面板过渡）═══ */
+(function setupTabs() {
+  const tabs = [...document.querySelectorAll('.tab')];
+  const indicator = document.getElementById('tabIndicator');
+
+  function moveIndicator(tab) {
+    indicator.style.width = tab.offsetWidth + 'px';
+    indicator.style.transform = `translateX(${tab.offsetLeft - 6}px)`; /* 减去容器 padding */
+  }
+
+  function activate(tab) {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.classList.toggle('on', on);
+      t.setAttribute('aria-selected', on);
+    });
+    document.querySelectorAll('.panel').forEach(p => {
+      const show = p.id === tab.dataset.panel;
+      if (show && !p.classList.contains('active')) {
+        /* 先摘掉再强制回流，保证每次切换都重放入场动画 */
+        p.classList.remove('active');
+        void p.offsetWidth;
+        p.classList.add('active');
+      } else if (!show) {
+        p.classList.remove('active');
+      }
+    });
+    history.replaceState(null, '', '#' + tab.dataset.panel.replace('panel-', ''));
+    moveIndicator(tab);
+  }
+
+  tabs.forEach(t => t.addEventListener('click', () => activate(t)));
+  addEventListener('resize', () => moveIndicator(document.querySelector('.tab.on')));
+
+  /* 支持 #releases / #about 深链直达 */
+  const hash = location.hash.replace('#', '');
+  const initial = tabs.find(t => t.dataset.panel === 'panel-' + hash) || tabs[0];
+  requestAnimationFrame(() => activate(initial));
+})();
+
+/* ═══ 链接装配（一处修改全页生效）═══ */
+(function setupLinks() {
+  document.getElementById('btnGithub').href = GITHUB_URL;
+  document.getElementById('rowGithub').href = GITHUB_URL;
+  document.getElementById('btnDownload').href = DOWNLOAD_URL;
+  document.getElementById('btnProject').href = PROJECT_URL;
+  document.getElementById('chipVersion').textContent =
+    `v${RELEASES[0].v} · versionCode ${RELEASES[0].code}`;
+  document.getElementById('footerLinks').innerHTML =
+    `<a href="${GITHUB_URL}" target="_blank" rel="noopener">GitHub</a>` +
+    ` · <a href="${PROJECT_URL}" target="_blank" rel="noopener">原项目官网</a>` +
+    ` · <a href="${DOWNLOAD_URL}" target="_blank" rel="noopener">下载</a>`;
+})();
+
+/* ═══ 主题切换（带全局配色过渡）═══ */
+(function setupTheme() {
+  const btn = document.getElementById('themeToggle');
+  btn.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    if (next === 'light') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = 'dark';
+    localStorage.setItem('unilink-theme', next);
+  });
+})();
+
+/* ═══ 站头加载：直接引用 https://api.mcylyr.cn/h5/header.html ═══
+   同源部署（fetch 可读）→ 注入原始 HTML：编码可控、下拉菜单不裁剪；
+   跨域（fetch 被 CORS 拦下）→ 回退 <iframe> 直接引用。 */
+(async function loadHeader() {
+  const SRC = "https://api.mcylyr.cn/h5/header.html";
+  const host = document.getElementById("siteHeaderHost");
+  const frame = document.getElementById("siteHeaderFrame");
+  try {
+    const res = await fetch(SRC, { cache: "no-cache" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    let html = await res.text();
+    /* 原文件无 charset 声明（服务器也不下发），显式按 UTF-8 解读 */
+    if (!/charset/i.test(html)) html = '<meta charset="utf-8">\n' + html;
+    /* 站头里的 logo/联系我们以 "/" 为根 —— 统一指回其官网根目录 */
+    html = html.replace("location.href='/'", "location.href='//www.mcylyr.cn'")
+               .replace("location.href='/about'", "location.href='//www.mcylyr.cn/about'");
+    host.innerHTML = html;
+    /* innerHTML 注入的 <script> 不会执行：摘出来重建一次，
+       让站头自带的"滚动收窄"逻辑真正生效 */
+    host.querySelectorAll("script").forEach(old => {
+      const s = document.createElement("script");
+      for (const a of old.attributes) s.setAttribute(a.name, a.value);
+      s.textContent = old.textContent;
+      old.replaceWith(s);
+    });
+    document.body.classList.add("header-injected");
+    frame.parentElement.remove();
+    /* 站头收窄（>30px，与其自带脚本同阈值）时，页签吸附位置同步 100px → 60px */
+    addEventListener("scroll", () => {
+      document.body.classList.toggle("header-scrolled", scrollY > 30);
+    }, { passive: true });
+  } catch (e) {
+    frame.src = SRC;
+    document.body.classList.add("header-frame");
+    host.remove();
+  }
+})();
+</script>
+</body>
+</html>

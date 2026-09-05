@@ -15,7 +15,7 @@
     <!-- 页面容器：4 个页面同时存在，靠可见性切换。
          页面数量少且状态需要保留（输入框内容、日志滚动位置），
          用 ViewPager + Fragment 反而增加复杂度 -->
-    <FrameLayout
+    <com.unilink.app.ui.SwipePageHost
         android:id="@+id/pageHost"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -29,7 +29,7 @@
         <include layout="@layout/page_settings" />
 
         <include layout="@layout/page_about" />
-    </FrameLayout>
+    </com.unilink.app.ui.SwipePageHost>
 
     <!-- ═══════════ 悬浮 Dock ═══════════ -->
     <FrameLayout

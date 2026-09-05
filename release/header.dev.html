@@ -1,0 +1,190 @@
+<meta charset="utf-8">
+<style>
+    /* 1. 独立命名空间，避免任何常用词 */
+    .u-x-portal-v3-root {
+        /* 强制重置所有继承属性，防止宿主网站的 color, font-size 等钻进来 */
+        all: unset; 
+        box-sizing: border-box !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 100px !important;
+        display: flex !important;
+        align-items: center !important;
+        z-index: 2147483647 !important;
+        transition: all 0.4s ease !important;
+        background-color: transparent;
+        font-family: 'PingFang SC', sans-serif !important;
+    }
+
+    /* 滚动后的高亮状态 */
+    .u-x-portal-v3-root.is-active-scrolled {
+        background-color: rgba(5, 5, 5, 0.95) !important;
+        height: 60px !important;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.3) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    .u-x-portal-v3-inner {
+        all: unset;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 0 10% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Logo 部分 - 弃用 <a> 标签名，改用类名控制 */
+    .u-x-portal-v3-logo-anchor {
+        all: unset;
+        cursor: pointer !important;
+        font-weight: 900 !important;
+        font-size: 22px !important;
+        letter-spacing: 2px !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* 导航组合 */
+    .u-x-portal-v3-nav-set {
+        all: unset;
+        display: flex !important;
+        align-items: center !important;
+        gap: 35px !important;
+    }
+
+    /* 导航链接 */
+    .u-x-portal-v3-link-item {
+        all: unset;
+        cursor: pointer !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        transition: 0.3s !important;
+        position: relative !important;
+    }
+
+    .u-x-portal-v3-link-item:hover {
+        color: #00f3ff !important;
+        text-shadow: 0 0 8px rgba(0, 243, 255, 0.5) !important;
+    }
+
+    /* 下拉容器 */
+    .u-x-portal-v3-drop-box {
+        all: unset;
+        position: relative !important;
+    }
+
+    /* 下拉面板 */
+    .u-x-portal-v3-drop-panel {
+        all: unset;
+        position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        width: 160px !important;
+        background: #111111 !important;
+        border: 1px solid #333 !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 8px 0 !important;
+        margin-top: 10px !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transform: translateY(10px) !important;
+        transition: 0.3s !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    }
+
+    .u-x-portal-v3-drop-box:hover .u-x-portal-v3-drop-panel {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) !important;
+    }
+
+    /* 下拉列表内的子项 */
+    .u-x-portal-v3-sub-item {
+        all: unset;
+        display: block !important;
+        padding: 12px 20px !important;
+        color: #ccc !important;
+        font-size: 13px !important;
+        cursor: pointer !important;
+        transition: 0.2s !important;
+    }
+
+    .u-x-portal-v3-sub-item:hover {
+        background: rgba(0, 243, 255, 0.1) !important;
+        color: #00f3ff !important;
+    }
+
+    /* 特殊按钮项 */
+    .u-x-portal-v3-btn-action {
+        all: unset;
+        cursor: pointer !important;
+        border: 1px solid #00f3ff !important;
+        padding: 6px 22px !important;
+        border-radius: 30px !important;
+        color: #00f3ff !important;
+        font-size: 13px !important;
+        font-weight: bold !important;
+        transition: 0.3s !important;
+    }
+
+    .u-x-portal-v3-btn-action:hover {
+        background: #00f3ff !important;
+        color: #000 !important;
+        box-shadow: 0 0 15px rgba(0, 243, 255, 0.4) !important;
+    }
+</style>
+
+<div class="u-x-portal-v3-root" id="ux-v3-header">
+    <div class="u-x-portal-v3-inner">
+        <div class="u-x-portal-v3-logo-anchor" onclick="location.href='/'">
+            <span style="color:#00f3ff"></span>
+            <img src="//api.mcylyr.cn/photo/logo/station.png" alt="Logo" weight='100px' height="54px">
+        </div>
+
+        <div class="u-x-portal-v3-nav-set">
+            <div class="u-x-portal-v3-link-item" onclick="location.href='//www.mcylyr.cn'">工作室官网</div>
+            <div class="u-x-portal-v3-drop-box">
+                <div class="u-x-portal-v3-link-item">网站群服务</div>
+                <div class="u-x-portal-v3-drop-panel">
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//openclaw.mcylyr.cn'">OpenClaw</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//blog.mcylyr.cn'">个人博客</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='https://login.microsoftonline.com/mcylyr.cn/oauth2/v2.0/authorize?client_id=4765445b-32c6-49b0-83e6-1d93765276ca&redirect_uri=https%3a%2f%2fm365.cloud.microsoft%2flandingv2&response_type=code+id_token&scope=openid+profile+https%3a%2f%2fwww.office.com%2fv2%2fOfficeHome.All&response_mode=form_post&nonce=639108299259597789.OTkxOWE2ZGYtYzVjOC00MzE2LWJmNTItMjc5NjMzNDFkMTZkZmRmMTg4ZDQtMDcwYi00MjYwLTkzOGQtZmFmY2MyMmNhODcx&ui_locales=zh-CN&mkt=zh-CN&prompt=select_account&client-request-id=9bd8d519-97c3-4e49-931f-2f32910d0072&state=CaLOMp-t96qiFWRY4lmeesb3zWePiFCbqq2K06-Fw6jBUzdHgdamgQQZkXIDTuFOMNMQuNzLyFq5omv8loHkL3NVYlWtjtqOSXBuiIM9bUI9axMxdUUA4YlgS5ba6d0gIC2CIDsqSu1ZtjUwJ_AMpZmvw5A25Tdbcf5ZHv0_380SNgtmaT_NW3JVM__WSY6w9Ur1Mhh7eXJw8I-Ntq2TXO1MIgyJrp2oZke7LVjd-6J2m3OFqurK06hkWVHxrIhWgxnqO048QV3wxY7Xl4YpgHF28K5xdlCSIGtcYngaBTMJzYcFeTKTWqSMinREtEV6VUZz-GHyBOr65ABDSP-pRbfk1gcJqJsAEbQWIIHLIWmofFZ4FncR3zF9TEhAYr6JshYm3tm9kY9dnjvgLtqEUu-xF8DeO3Hwm1nO78v0CbRWIha-MQO2zCT9a23fopz_RHkGvizJb3L_ualG0fr21XaQqYjQ6Z-TpmGZczAbk-LvuOzgFtI_YvxBxsTqHQeAhzlXyUWYvn2uHZw2eRjBSA&x-client-SKU=ID_NET8_0&x-client-ver=8.14.0.0&allowbacktocommon=True'">Office工作台</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//lhyy.mcylyr.cn'">落花有意 LHYY</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//mc.mcylyr.cn'">樱落怡然Minecraft</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//pfz.mcylyr.cn'">MC皮肤站/外置登录</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//chat.mcylyr.cn'">AI 工作台</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//api.mcylyr.cn'">API 统一接口</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//pan.mcylyr.cn'">樱落怡然网盘</div>
+                    <div class="u-x-portal-v3-sub-item" onclick="location.href='//aicut.mcylyr.cn'">BigBanana AiCut</div>
+                </div>
+            </div>
+            <!--<div class="u-x-portal-v3-link-item" onclick="location.href='/news'">最新动态</div>-->
+            <div class="u-x-portal-v3-link-item" onclick="location.href='//status.mcylyr.cn'">服务状态监控</div>
+            <div class="u-x-portal-v3-link-item" onclick="location.href='//wiki.mcylyr.cn'">樱落生态 Wiki</div>
+            <div class="u-x-portal-v3-link-item" onclick="location.href='https://qm.qq.com/q/CWXhIkvk6Q'">加入交流群</div>
+            <div class="u-x-portal-v3-link-item" onclick="location.href='/about'">联系我们</div>
+            <div class="u-x-portal-v3-btn-action" onclick="location.href='https://login.mcylyr.cn/'">樱落怡然OA工作台</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const h = document.getElementById('ux-v3-header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 30) {
+                h.classList.add('is-active-scrolled');
+            } else {
+                h.classList.remove('is-active-scrolled');
+            }
+        });
+    })();
+</script>

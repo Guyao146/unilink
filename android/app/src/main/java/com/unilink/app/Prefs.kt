@@ -41,4 +41,9 @@ class Prefs(ctx: Context) {
     var retryAttempts: Int
         get() = sp.getInt("retry_attempts", 0).coerceAtLeast(0)
         set(v) = sp.edit().putInt("retry_attempts", v.coerceAtLeast(0)).apply()
+
+    /** 外观模式：system / light / dark */
+    var themeMode: String
+        get() = sp.getString("theme_mode", "system") ?: "system"
+        set(v) = sp.edit().putString("theme_mode", v).apply()
 }

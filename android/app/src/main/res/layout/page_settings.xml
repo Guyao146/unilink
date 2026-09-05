@@ -165,6 +165,61 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- ═══ 外观 ═══ -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sp_2xl"
+            android:layout_marginStart="@dimen/sp_sm"
+            android:text="@string/sec_appearance"
+            style="@style/GroupHeader" />
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/sp_sm"
+            style="@style/CardGlass">
+
+            <TextView
+                android:id="@+id/appearanceSystem"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/h_row"
+                android:background="@drawable/row_selectable"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/sp_lg"
+                android:paddingEnd="@dimen/sp_lg"
+                android:text="@string/appearance_system"
+                style="@style/TextBody" />
+
+            <TextView
+                android:id="@+id/appearanceLight"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/h_row"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:background="@drawable/row_selectable"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/sp_lg"
+                android:paddingEnd="@dimen/sp_lg"
+                android:text="@string/appearance_light"
+                style="@style/TextBody" />
+
+            <TextView
+                android:id="@+id/appearanceDark"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/h_row"
+                android:layout_marginTop="@dimen/sp_sm"
+                android:background="@drawable/row_selectable"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/sp_lg"
+                android:paddingEnd="@dimen/sp_lg"
+                android:text="@string/appearance_dark"
+                style="@style/TextBody" />
+        </LinearLayout>
+
         <!-- ═══ 连接 ═══ -->
         <TextView
             android:layout_width="wrap_content"

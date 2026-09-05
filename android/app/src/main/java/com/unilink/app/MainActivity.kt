@@ -1,7 +1,6 @@
 package com.unilink.app
 
 import android.Manifest
-import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -20,6 +19,8 @@ import android.widget.Space
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.unilink.app.auth.AuthSession
 import com.unilink.app.auth.LoginActivity
 import com.unilink.app.auth.QrTicket
@@ -28,7 +29,22 @@ import com.unilink.app.ui.LogView
 import com.unilink.app.ui.Motion
 import org.json.JSONObject
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val THEME_SYSTEM = "system"
+        private const val THEME_LIGHT = "light"
+        private const val THEME_DARK = "dark"
+
+        /** 在 Activity 创建前应用已保存的外观，确保首帧就是正确主题。 */
+        private fun applyTheme(mode: String) {
+            AppCompatDelegate.setDefaultNightMode(when (mode) {
+                THEME_LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+                THEME_DARK -> AppCompatDelegate.MODE_NIGHT_YES
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            })
+        }
+    }
 
     private lateinit var prefs: Prefs
     private lateinit var etServer: EditText
@@ -60,6 +76,11 @@ class MainActivity : Activity() {
     private lateinit var dotNotifAccess: View
     private lateinit var dotNotifPost: View
     private lateinit var dotA11y: View
+
+    // 设置页外观选择
+    private lateinit var appearanceSystem: TextView
+    private lateinit var appearanceLight: TextView
+    private lateinit var appearanceDark: TextView
 
     /** 四个页面与对应的 Dock 项，索引一一对应 */
     private lateinit var pages: List<View>
@@ -170,6 +191,7 @@ class MainActivity : Activity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        applyTheme(Prefs(this).themeMode)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         prefs = Prefs(this)
@@ -210,6 +232,10 @@ class MainActivity : Activity() {
         dotNotifPost = findViewById(R.id.dotNotifPost)
         dotA11y = findViewById(R.id.dotA11y)
 
+        appearanceSystem = findViewById(R.id.appearanceSystem)
+        appearanceLight = findViewById(R.id.appearanceLight)
+        appearanceDark = findViewById(R.id.appearanceDark)
+
         pages = listOf(
             findViewById(R.id.pageHome),
             findViewById(R.id.pageLink),
@@ -237,6 +263,7 @@ class MainActivity : Activity() {
         swRecvNotify.isChecked = prefs.recvNotify
         swRecvClip.isChecked = prefs.recvClip
         etRetryCount.setText(prefs.retryAttempts.toString())
+        refreshAppearance()
 
         AuthSession.load(this)
         etQrServer.setText(AuthSession.qrServer(this))
@@ -263,6 +290,10 @@ class MainActivity : Activity() {
         click(R.id.btnAboutBottom) { showAbout() }
         click(R.id.btnAboutBack) { hideAbout() }
         click(R.id.btnWebsite) { openWebsite() }
+
+        click(R.id.appearanceSystem) { setAppearance(THEME_SYSTEM) }
+        click(R.id.appearanceLight) { setAppearance(THEME_LIGHT) }
+        click(R.id.appearanceDark) { setAppearance(THEME_DARK) }
     }
 
     /** 绑定点击并附带按压光效，省掉每处重复两行 */
@@ -281,6 +312,35 @@ class MainActivity : Activity() {
     }
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+
+    /** 外观选择使用整行选中态，避免原生 RadioButton 把页面拉回 Material 默认风格。 */
+    private fun refreshAppearance() {
+        val selected = prefs.themeMode
+        val rows = listOf(
+            THEME_SYSTEM to appearanceSystem,
+            THEME_LIGHT to appearanceLight,
+            THEME_DARK to appearanceDark
+        )
+        rows.forEach { (mode, row) ->
+            row.isSelected = mode == selected
+            row.setTextColor(getColor(if (row.isSelected) R.color.ac_primary else R.color.ink_primary))
+            row.contentDescription = if (row.isSelected) {
+                "${row.text}，已选择"
+            } else {
+                "${row.text}，未选择"
+            }
+        }
+    }
+
+    private fun setAppearance(mode: String) {
+        if (prefs.themeMode == mode) return
+        prefs.themeMode = mode
+        AppCompatDelegate.setDefaultNightMode(when (mode) {
+            THEME_LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+            THEME_DARK -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        })
+    }
 
     // ================= Dock 导航 =================
 

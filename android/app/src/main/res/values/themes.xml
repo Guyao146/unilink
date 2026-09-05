@@ -9,7 +9,7 @@
       Material 组件默认样式（涟漪色、控件内边距）与之打架。
       深色变体见 values-night/themes.xml。
     -->
-    <style name="Theme.UniLink" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.UniLink" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_ambient</item>
         <item name="android:colorAccent">@color/ac_primary</item>
         <item name="android:textColorPrimary">@color/ink_primary</item>

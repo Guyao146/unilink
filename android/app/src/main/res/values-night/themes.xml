@@ -7,7 +7,7 @@
   图标改为浅色。
 -->
 <resources>
-    <style name="Theme.UniLink" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.UniLink" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_ambient</item>
         <item name="android:colorAccent">@color/ac_primary</item>
         <item name="android:textColorPrimary">@color/ink_primary</item>

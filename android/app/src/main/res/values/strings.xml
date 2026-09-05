@@ -9,6 +9,10 @@
     <string name="tab_link">连接</string>
     <string name="tab_sync">同步</string>
     <string name="tab_settings">设置</string>
+    <string name="sec_appearance">外观</string>
+    <string name="appearance_system">跟随系统</string>
+    <string name="appearance_light">浅色</string>
+    <string name="appearance_dark">深色</string>
 
     <!-- ── 首页 ── -->
     <string name="status_idle">未连接</string>

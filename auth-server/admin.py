@@ -14,9 +14,9 @@
 https 反代访问。
 
 网页配置写入 data/state.json，与其它配置来源的优先级是：
-    环境变量 > 本地 config.json > 网页后台 state
-即 .env 里写死的值永远优先，网页面板改不动它（适合「配置固化在编排文件里」
-的场景）；.env 没写的项才由网页面板接管。
+     网页后台 state > 环境变量（.env / compose）> 本地 config.json
+即面板里改过的值一定生效；.env 只用于面板尚未配置该项时的引导默认值。
+想让某项完全由 .env 接管，在面板里把它留空即可（留空 = 不改，不会覆盖 .env 的值）。
 """
 import hashlib
 import json

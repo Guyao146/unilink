@@ -2,9 +2,10 @@
 """
 UniLink 扫码登录服务配置
 =========================
-配置来源优先级：环境变量 > config.json > 内置默认值。
-Docker 部署只需维护 compose 同目录的一份 .env，所有项都能在其中修改；
-config.json 仅在不使用 Docker 时才需要。
+配置来源优先级：网页后台 state > 环境变量 > 本地 config.json > 内置默认值。
+即：在 /setup 或 /admin 面板里改过的值一定生效；面板没配过的项才由 .env / 环境变量
+提供引导默认值。Docker 部署时维护 compose 同目录的一份 .env 即可，所有项都能在其中
+修改；面板里的修改会覆盖 .env 中同名的项。
 
 必填项（缺失时启动即报错，避免带着不安全默认值上线）：
   UNILINK_BASE_URL          本服务对外可访问的根地址，如 https://qr.example.com
@@ -114,15 +115,55 @@ def _env(key: str, default=None):
     return v if v not in (None, "") else default
 
 
-def _int(key: str, default):
-    """整数型配置项。格式不对时报清楚的错，而不是抛 ValueError 让人摸不着头脑"""
-    v = _env(key)
-    if v is None:
+def _int_val(key: str, val, default):
+    """整数型配置项。格式不对时报清楚的错，而不是抛 ValueError 让人摸不着头脑。
+    val 可能是字符串（.env / 环境变量）也可能是 int（config.json / 后台写入）"""
+    if val is None or (isinstance(val, str) and not val.strip()):
         return default
     try:
-        return int(str(v).strip())
+        return int(str(val).strip())
     except ValueError:
-        raise ConfigError("%s 必须是整数（当前值 %r）" % (key, v))
+        raise ConfigError("%s 必须是整数（当前值 %r）" % (key, val))
+
+
+# 环境变量名 -> 配置字段名。网页后台改的值优先于这些环境变量（见 _apply_state）
+_ENV_FIELDS = {
+    "base_url": "UNILINK_BASE_URL",
+    "authentik_url": "UNILINK_AUTHENTIK_URL",
+    "client_id": "UNILINK_CLIENT_ID",
+    "client_secret": "UNILINK_CLIENT_SECRET",
+    "host": "UNILINK_HOST",
+    "port": "UNILINK_PORT",
+    "app_client_id": "UNILINK_APP_CLIENT_ID",
+    "app_redirect_uri": "UNILINK_APP_REDIRECT_URI",
+    "app_scopes": "UNILINK_APP_SCOPES",
+    "login_ttl": "UNILINK_LOGIN_TTL",
+    "code_ttl": "UNILINK_CODE_TTL",
+    "token_ttl": "UNILINK_TOKEN_TTL",
+    "id_token_ttl": "UNILINK_ID_TOKEN_TTL",
+    "max_sessions": "UNILINK_MAX_SESSIONS",
+    "allowed_subs": "UNILINK_ALLOWED_SUBS",
+    "allowed_groups": "UNILINK_ALLOWED_GROUPS",
+}
+
+
+def _apply_env(raw: dict) -> None:
+    """把环境变量叠到 raw 上（空值不覆盖，允许显式留空走下一层）"""
+    for name, env in _ENV_FIELDS.items():
+        v = _env(env)
+        if v is not None:
+            raw[name] = v
+
+
+def _apply_state(raw: dict) -> None:
+    """把网页后台的 state.json 叠到 raw 上，优先级最高 —— 面板里改的值必须生效。
+    空串视为「未填写」，不覆盖下层（面板里留空代表沿用现有值）"""
+    for k, v in _read_json(STATE_PATH).items():
+        if isinstance(v, str):
+            if v.strip():
+                raw[k] = v
+        elif v is not None:
+            raw[k] = v
 
 
 def _frozenset(val):
@@ -161,33 +202,38 @@ def save_state(data: dict) -> None:
 
 
 def load() -> Config:
-    # 优先级：环境变量 > 本地 config.json（开发者/部署者手填）> 网页后台 state
-    raw = dict(_read_json(STATE_PATH))
-    raw.update(_read_json(CFG_PATH))
+    # 优先级：网页后台 state > 环境变量（.env / compose）> 本地 config.json > 默认值。
+    # 后台面板是主配置入口，面板里改过的值必须生效；环境变量只在面板尚未配置过
+    # 该项时提供引导默认值（Docker 开箱即用），二者不冲突。
+    raw = _read_json(CFG_PATH)
+    _apply_env(raw)
+    _apply_state(raw)
 
-    base_url = _norm(_env("UNILINK_BASE_URL", raw.get("base_url", "")))
-    authentik_url = _norm(_env("UNILINK_AUTHENTIK_URL", raw.get("authentik_url", "")))
+    base_url = _norm(raw.get("base_url", ""))
+    authentik_url = _norm(raw.get("authentik_url", ""))
 
     if not base_url:
-        raise ConfigError("缺少 base_url（或环境变量 UNILINK_BASE_URL）"
-                          "：本服务对外可访问的根地址，例如 https://qr.example.com")
+        raise ConfigError("\u7f3a\u5c11 base_url\uff08\u6216\u73af\u5883\u53d8\u91cf UNILINK_BASE_URL\uff09"
+                          "\uff1a\u672c\u670d\u52a1\u5bf9\u5916\u53ef\u8bbf\u95ee\u7684\u6839\u5730\u5740\uff0c\u4f8b\u5982 https://qr.example.com"
+                          "\n\u8bf7\u590d\u5236 config.example.json \u4e3a config.json \u5e76\u586b\u5199\uff0c"
+                          "\u6216\u8bbe\u7f6e\u5bf9\u5e94\u73af\u5883\u53d8\u91cf\u3002")
     if not authentik_url:
-        raise ConfigError("缺少 authentik_url（或环境变量 UNILINK_AUTHENTIK_URL）"
-                          "：authentik 根地址，例如 https://auth.example.com")
+        raise ConfigError("\u7f3a\u5c11 authentik_url\uff08\u6216\u73af\u5883\u53d8\u91cf UNILINK_AUTHENTIK_URL\uff09"
+                          "\uff1aauthentik \u6839\u5730\u5740\uff0c\u4f8b\u5982 https://auth.example.com")
 
     clients_raw = []
-    env_clients = _env("UNILINK_CLIENTS")
-    if env_clients:
-        clients_raw = json.loads(env_clients)
-    elif raw.get("clients"):
+    if raw.get("clients"):
+        # \u663e\u5f0f\u7684 clients \u6570\u7ec4\uff08config.json\uff0c\u6216\u540e\u53f0\u5199\u5165\u7684\u5b8c\u6574\u6570\u7ec4\uff09
         clients_raw = raw["clients"]
+    elif _env("UNILINK_CLIENTS"):
+        # \u9003\u751f\u53e3\uff1a\u73af\u5883\u53d8\u91cf\u76f4\u63a5\u7ed9\u5b8c\u6574 JSON \u6570\u7ec4\uff08\u591a\u5ba2\u6237\u7aef\u7b49\u9ad8\u7ea7\u573a\u666f\uff09
+        clients_raw = json.loads(_env("UNILINK_CLIENTS"))
     else:
-        # 既没有 UNILINK_CLIENTS 也没有 clients 数组时，用零散字段拼装一个 ——
-        # 覆盖「.env 只填单值」和「网页后台填 client_id + secret」两种情形
-        cid = str(_env("UNILINK_CLIENT_ID",
-                       raw.get("client_id", "unilink-qr")) or "unilink-qr").strip()
-        sec = str(_env("UNILINK_CLIENT_SECRET",
-                       raw.get("client_secret", "")) or "")
+        # \u5e38\u89c4\u60c5\u5f62\uff1a\u7531 client_id + client_secret + authentik_url \u62fc\u88c5\u4e00\u4e2a\u5ba2\u6237\u7aef\uff0c
+        # \u8986\u76d6\u300c.env \u53ea\u586b\u5355\u503c\u300d\u548c\u300c\u7f51\u9875\u540e\u53f0\u586b client_id + secret\u300d\u4e24\u79cd\u65b9\u5f0f\u3002
+        # client_id / secret \u5df2\u6309\u4e0a\u9762\u7684\u4f18\u5148\u7ea7\u5408\u5e76\u597d\uff0c\u540e\u53f0\u6539\u7684\u503c\u5728\u8fd9\u91cc\u751f\u6548\u3002
+        cid = str(raw.get("client_id", "unilink-qr") or "unilink-qr").strip()
+        sec = str(raw.get("client_secret", "") or "")
         if cid and sec:
             clients_raw = [{
                 "name": "authentik",
@@ -202,43 +248,43 @@ def load() -> Config:
         sec = str(c.get("client_secret") or "")
         uris = tuple(c.get("redirect_uris") or ())
         if not cid or not sec or not uris:
-            raise ConfigError("clients 中每一项都必须含 client_id / client_secret / redirect_uris")
+            raise ConfigError("clients \u4e2d\u6bcf\u4e00\u9879\u90fd\u5fc5\u987b\u542b client_id / client_secret / redirect_uris")
         if len(sec) < 24:
-            raise ConfigError("client_secret 长度不足 24 位，请使用高强度随机串"
-                              "（可用 python -c \"import secrets;print(secrets.token_urlsafe(48))\" 生成）")
+            raise ConfigError("client_secret \u957f\u5ea6\u4e0d\u8db3 24 \u4f4d\uff0c\u8bf7\u4f7f\u7528\u9ad8\u5f3a\u5ea6\u968f\u673a\u4e32"
+                              "\uff08\u53ef\u7528 python -c \"import secrets;print(secrets.token_urlsafe(48))\" \u751f\u6210\uff09")
         clients[cid] = Client(cid, sec, uris, str(c.get("name") or cid))
 
     if not clients:
-        raise ConfigError("clients 为空：至少需要注册 authentik 作为下游客户端，"
-                          "参见 auth-server/config.example.json")
+        raise ConfigError("clients \u4e3a\u7a7a\uff1a\u81f3\u5c11\u9700\u8981\u6ce8\u518c authentik \u4f5c\u4e3a\u4e0b\u6e38\u5ba2\u6237\u7aef\uff0c"
+                          "\u53c2\u89c1 auth-server/config.example.json")
 
     cfg = Config(base_url=base_url, authentik_url=authentik_url, clients=clients)
 
-    # 每一项都允许「环境变量 > config.json > 代码内默认值」。
-    # Docker 部署时只需维护一份 .env，不必再往镜像里塞 config.json。
-    cfg.host = _env("UNILINK_HOST", raw.get("host", cfg.host))
-    cfg.port = _int("UNILINK_PORT", raw.get("port", cfg.port))
-    cfg.app_client_id = _env("UNILINK_APP_CLIENT_ID",
-                             raw.get("app_client_id", cfg.app_client_id))
-    cfg.app_redirect_uri = _env("UNILINK_APP_REDIRECT_URI",
-                                raw.get("app_redirect_uri", cfg.app_redirect_uri))
-    cfg.app_scopes = _env("UNILINK_APP_SCOPES",
-                          raw.get("app_scopes", cfg.app_scopes))
-    cfg.login_ttl = _int("UNILINK_LOGIN_TTL", raw.get("login_ttl", cfg.login_ttl))
-    cfg.code_ttl = _int("UNILINK_CODE_TTL", raw.get("code_ttl", cfg.code_ttl))
-    cfg.token_ttl = _int("UNILINK_TOKEN_TTL", raw.get("token_ttl", cfg.token_ttl))
-    cfg.id_token_ttl = _int("UNILINK_ID_TOKEN_TTL",
-                            raw.get("id_token_ttl", cfg.id_token_ttl))
-    cfg.max_sessions = _int("UNILINK_MAX_SESSIONS",
-                            raw.get("max_sessions", cfg.max_sessions))
-    cfg.allowed_subs = _frozenset(_env("UNILINK_ALLOWED_SUBS",
-                                       raw.get("allowed_subs")))
-    cfg.allowed_groups = _frozenset(_env("UNILINK_ALLOWED_GROUPS",
-                                         raw.get("allowed_groups")))
+    # \u5404\u9879\u5df2\u6309\u300c\u7f51\u9875\u540e\u53f0 > \u73af\u5883\u53d8\u91cf > config.json\u300d\u5408\u5e76\u8fdb raw\uff0c\u76f4\u63a5\u53d6\u503c\u5373\u53ef\uff1b
+    # raw \u91cc\u6ca1\u6709\u7684\u9879\u56de\u843d\u5230 dataclass \u9ed8\u8ba4\u503c\u3002
+    cfg.host = str(raw.get("host") or cfg.host)
+    cfg.port = _int_val("UNILINK_PORT", raw.get("port"), cfg.port)
+
+    def pick(key, default):
+        v = str(raw.get(key) or "").strip()
+        return v or default
+
+    cfg.app_client_id = pick("app_client_id", cfg.app_client_id)
+    cfg.app_redirect_uri = pick("app_redirect_uri", cfg.app_redirect_uri)
+    cfg.app_scopes = pick("app_scopes", cfg.app_scopes)
+    cfg.login_ttl = _int_val("UNILINK_LOGIN_TTL", raw.get("login_ttl"), cfg.login_ttl)
+    cfg.code_ttl = _int_val("UNILINK_CODE_TTL", raw.get("code_ttl"), cfg.code_ttl)
+    cfg.token_ttl = _int_val("UNILINK_TOKEN_TTL", raw.get("token_ttl"), cfg.token_ttl)
+    cfg.id_token_ttl = _int_val("UNILINK_ID_TOKEN_TTL",
+                                raw.get("id_token_ttl"), cfg.id_token_ttl)
+    cfg.max_sessions = _int_val("UNILINK_MAX_SESSIONS",
+                                raw.get("max_sessions"), cfg.max_sessions)
+    cfg.allowed_subs = _frozenset(raw.get("allowed_subs"))
+    cfg.allowed_groups = _frozenset(raw.get("allowed_groups"))
 
     if base_url.startswith("http://") and not base_url.startswith("http://127.0.0.1"):
-        print("[警告] base_url 不是 https —— 授权码与令牌将以明文传输，"
-              "生产环境请务必用 Nginx/Caddy 反代为 https")
+        print("[\u8b66\u544a] base_url \u4e0d\u662f https \u2014\u2014 \u6388\u6743\u7801\u4e0e\u4ee4\u724c\u5c06\u4ee5\u660e\u6587\u4f20\u8f93\uff0c"
+              "\u751f\u4ea7\u73af\u5883\u8bf7\u52a1\u5fc5\u7528 Nginx/Caddy \u53cd\u4ee3\u4e3a https")
 
     return cfg
 

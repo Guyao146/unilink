@@ -52,10 +52,15 @@ docker compose up -d                                # 直接起，先不填配�
 > 安全提醒：未配置时 `/setup` 是开放的，部署后请尽快完成配置；
 > 配置完成后 `/setup` 会自动关闭（返回 404）。`/admin` 务必只经 https 反代访问。
 
-## 改配置：全都在 .env 里
+## 改配置：面板 or .env，任选其一
 
-**所有配置项都在 compose 同目录的 `.env` 里改**，不需要进容器、也不需要 `config.json`：
-改完执行 `docker compose up -d` 即生效。完整列表见 `.env.example` 的注释。
+配置优先级是 **网页后台 > `.env` > 内置默认值**：
+
+- 在 `/admin` 面板里改的值**一定生效**，保存即生效，不用重启、不用改文件；
+- 面板里**留空**的项，回落到 `.env` 的值。
+
+所以两种风格都行：喜欢全在网页上改，就把 `.env` 留空；喜欢把配置固化在编排文件里，
+就在 `.env` 里写死，面板不去动那些项即可。完整列表见 `.env.example` 的注释。
 
 | .env 变量 | 说明 | 默认值 |
 |------|------|------|
@@ -74,9 +79,9 @@ docker compose up -d                                # 直接起，先不填配�
 | `UNILINK_ALLOWED_GROUPS` | 允许扫码的 authentik 组，同上 | — |
 | `UNILINK_PORT` | 监听端口（改了反代与自检命令里的 8790 也要同步） | `8790` |
 
-> **缺必填项不会静默启动**：`.env` 里 `UNILINK_BASE_URL` / `UNILINK_AUTHENTIK_URL` /
-> `UNILINK_CLIENT_SECRET` 任一为空，`docker compose up` 会**当场报错并指名缺哪一项**，
-> 不必等容器起来再翻日志。
+> 三项必填（`UNILINK_BASE_URL` / `UNILINK_AUTHENTIK_URL` / `UNILINK_CLIENT_SECRET`）
+> 留空时**不会启动失败**，而是进入「首次配置模式」，等你到 `/setup` 网页上填；
+> 填完立刻切换到正常运行模式。这是刻意设计：部署时不必先跑去改文件。
 
 自检：
 

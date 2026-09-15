@@ -164,20 +164,19 @@ class SwipePageHost @JvmOverloads constructor(
             next?.animate()?.alpha(0f)?.setDuration(180L)?.setInterpolator(Motion.SMOOTH)?.start()
             onSwipePage?.invoke(currentPage)
         } else {
-            // 旧页整体淡出，新页内容级联淡入；两页始终同层同位、不缩放
+            // 滑动手势完成：内容在拖动时已随页面淡化到位，
+            // 松手后只需把透明度补满——不再重播级联，避免内容消失的空窗（闪/白屏）
             currentPage = target
-            onSwipePage?.invoke(target)   // Dock 立即同步，内容随后逐个跟上
+            onSwipePage?.invoke(target)   // Dock 立即同步
             fadeOut(old)
-            // 先把新页内容归零，页面透明度再从拖动末值平滑补满，
-            // 避免松手瞬间页面突然变实造成的闪屏
-            cascadeIn(next)
-            next.animate().alpha(1f).setDuration(120L).setInterpolator(Motion.SMOOTH).start()
+            // 页面透明度从拖动末值平滑补满，内容保持原位不动
+            next.animate().alpha(1f).setDuration(160L).setInterpolator(Motion.SMOOTH).start()
         }
         dragging = false
         parent?.requestDisallowInterceptTouchEvent(false)
     }
 
-    /** Dock 点击与滑动松手共用同一套过渡：旧页淡出 + 新页内容级联淡入 */
+    /** Dock 点击切页：旧页淡出 + 新页内容级联淡入（凭空切来的页面值得强调） */
     private fun transition(old: View, next: View) {
         for (i in 0 until childCount) {
             page(i)?.apply {

@@ -252,8 +252,11 @@ class MainActivity : AppCompatActivity() {
         pageHost = findViewById(R.id.pageHost)
         pageHost.swipePageCount = tabs.size
         pageHost.onSwipePage = { index ->
-            // 回调已经发生在动画结束时；只同步 Dock，不再次触发页面动画
-            selectTab(index, animate = false, fromSwipe = true)
+            // 回调发生在过渡开始时：Dock 立即同步，页面内容随后级联跟上
+            selectTab(index, animate = true, fromSwipe = true)
+        }
+        pageHost.onSwipeProgress = { target, progress ->
+            applySwipeProgress(target, progress)
         }
         dock = findViewById(R.id.dock)
         dockIndicator = findViewById(R.id.dockIndicator)
@@ -408,6 +411,22 @@ class MainActivity : AppCompatActivity() {
             } else {
                 dockIndicator.translationX = target
             }
+        }
+    }
+
+    /** 滑动期间 Dock 选中底板实时跟随手指，与页面交叉淡化同步，而非松手后才跳过去 */
+    private fun applySwipeProgress(target: Int, progress: Float) {
+        if (target < 0) return
+        dock.post {
+            val available = dock.width - dock.paddingStart - dock.paddingEnd
+            if (available <= 0) return@post
+            val itemWidth = available / tabs.size
+            if (itemWidth <= 0) return@post
+            dockIndicator.layoutParams = dockIndicator.layoutParams.apply { width = itemWidth }
+            // 取消可能未走完的归位动画，改为逐帧实时跟随
+            dockIndicator.animate().cancel()
+            val from = currentTab
+            dockIndicator.translationX = itemWidth * (from + (target - from) * progress)
         }
     }
 

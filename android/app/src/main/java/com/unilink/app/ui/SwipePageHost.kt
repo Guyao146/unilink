@@ -43,6 +43,9 @@ class SwipePageHost @JvmOverloads constructor(
     /** Activity 用于同步 Dock */
     var onSwipePage: ((Int) -> Unit)? = null
 
+    /** 拖动进度：目标页索引（边界页为 -1）与归一化进度，供 Dock 指示器实时跟随 */
+    var onSwipeProgress: ((target: Int, progress: Float) -> Unit)? = null
+
     private fun page(index: Int): View? =
         if (index in 0 until childCount) getChildAt(index) else null
 
@@ -130,6 +133,7 @@ class SwipePageHost @JvmOverloads constructor(
         if (activeTarget !in 0 until swipePageCount) {
             // 边界页只做轻微透明度反馈，松手后恢复
             old.alpha = 1f - (abs(dx) / width.coerceAtLeast(1) * 0.08f)
+            onSwipeProgress?.invoke(-1, 0f)
             return
         }
         val next = page(activeTarget) ?: return
@@ -137,6 +141,7 @@ class SwipePageHost @JvmOverloads constructor(
         // 同一平面的渐进交叉淡化：位置、大小和层级几何关系完全不变
         old.alpha = 1f - progress
         next.alpha = progress
+        onSwipeProgress?.invoke(activeTarget, progress)
     }
 
     private fun finishDrag(dx: Float) {
@@ -153,13 +158,18 @@ class SwipePageHost @JvmOverloads constructor(
                 .setInterpolator(Motion.SMOOTH).withEndAction {
                     next?.apply { visibility = View.GONE; alpha = 1f; resetCascade(this) }
                 }.start()
+            // 松手未越过阈值：目标页一并淡出，避免突然消失；Dock 指示器弹回当前页
+            next?.animate()?.alpha(0f)?.setDuration(180L)?.setInterpolator(Motion.SMOOTH)?.start()
+            onSwipePage?.invoke(currentPage)
         } else {
             // 旧页整体淡出，新页内容级联淡入；两页始终同层同位、不缩放
             currentPage = target
             onSwipePage?.invoke(target)   // Dock 立即同步，内容随后逐个跟上
             fadeOut(old)
-            next.alpha = 1f
+            // 先把新页内容归零，页面透明度再从拖动末值平滑补满，
+            // 避免松手瞬间页面突然变实造成的闪屏
             cascadeIn(next)
+            next.animate().alpha(1f).setDuration(120L).setInterpolator(Motion.SMOOTH).start()
         }
         dragging = false
         parent?.requestDisallowInterceptTouchEvent(false)
@@ -183,7 +193,6 @@ class SwipePageHost @JvmOverloads constructor(
 
     /** 旧页淡出并隐藏。隐藏前校验状态，避免被中途打断后误藏当前页 */
     private fun fadeOut(view: View) {
-        view.alpha = 1f
         view.animate().alpha(0f).setDuration(200L)
             .setInterpolator(Motion.SMOOTH)
             .withEndAction { hideIfStale(view) }

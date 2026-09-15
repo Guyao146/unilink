@@ -119,8 +119,10 @@ class SwipePageHost @JvmOverloads constructor(
         next.translationX = 0f
         next.scaleX = 1f
         next.scaleY = 1f
-        next.alpha = 0f
+        // resetCascade 会把页面透明度归 1，必须先归位再置 0，
+        // 否则拖动起始时新页会以全亮状态闪现一下
         resetCascade(next)
+        next.alpha = 0f
         old.translationX = 0f
         old.scaleX = 1f
         old.scaleY = 1f
@@ -260,13 +262,31 @@ class SwipePageHost @JvmOverloads constructor(
         }
         // 兜底：动画被中途取消（用户快速再滑动）时仍把内容归位
         page.postDelayed({
-            page.alpha = 1f
-            for (v in targets) { v.alpha = 1f; v.translationY = 0f }
+            // 页面已被切走时不再强写透明度，避免误伤正在进行的拖动淡化
+            if (currentPage == indexOfChild(page)) {
+                page.alpha = 1f
+                for (v in targets) { v.alpha = 1f; v.translationY = 0f }
+            }
         }, maxDelay + 340L)
     }
 
     private fun stopAnimations() {
-        for (i in 0 until childCount) page(i)?.animate()?.cancel()
+        /**
+         * 触摸时停止一切自动过渡，并把界面收拢到稳定静止态：当前页完整可见（含内容），其余页隐藏。
+         * 若只取消动画而不归位，快速滑动会让页面透明度卡在动画中间值——
+         * 内容明明在，页面却是半透明的，看起来就像内容凭空消失。
+         */
+        for (i in 0 until childCount) {
+            val p = page(i) ?: continue
+            p.animate().cancel()
+            if (i == currentPage) {
+                p.alpha = 1f
+                resetCascade(p)
+            } else {
+                p.visibility = View.GONE
+                p.alpha = 1f
+            }
+        }
     }
 }
 

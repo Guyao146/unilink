@@ -2,10 +2,14 @@ package com.unilink.app.ui
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewConfiguration
 import android.widget.FrameLayout
+import android.widget.ScrollView
+import android.widget.Space
 import kotlin.math.abs
 
 /**
@@ -24,6 +28,11 @@ class SwipePageHost @JvmOverloads constructor(
     private var dragging = false
     private var activeTarget = -1
     private var activeDirection = 0
+
+    /** 内容级联淡入的纵向位移（13dp）与节奏 */
+    private val cascadeTranslation = with(context.resources.displayMetrics) {
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 13f, this)
+    }
 
     var currentPage: Int = 0
         private set
@@ -48,6 +57,7 @@ class SwipePageHost @JvmOverloads constructor(
                 translationX = 0f
                 alpha = 1f
             }
+            page(index)?.let { resetCascade(it) }
             currentPage = index
             return
         }
@@ -99,18 +109,20 @@ class SwipePageHost @JvmOverloads constructor(
         val next = page(target)
         if (next == null || target !in 0 until swipePageCount) {
             old.alpha = 1f
+            resetCascade(old)
             return
         }
-        // 两页重叠在同一位置：手势只改变透明度，不改变几何层级
         next.visibility = View.VISIBLE
         next.translationX = 0f
         next.scaleX = 1f
         next.scaleY = 1f
         next.alpha = 0f
+        resetCascade(next)
         old.translationX = 0f
         old.scaleX = 1f
         old.scaleY = 1f
         old.alpha = 1f
+        resetCascade(old)
     }
 
     private fun dragTo(dx: Float) {
@@ -137,29 +149,23 @@ class SwipePageHost @JvmOverloads constructor(
 
         val next = page(target)
         if (!complete || next == null) {
-            // 只恢复透明度，不做位移/缩放回弹
             old.animate().alpha(1f).setDuration(240L)
                 .setInterpolator(Motion.SMOOTH).withEndAction {
-                    next?.apply { visibility = View.GONE; alpha = 1f }
+                    next?.apply { visibility = View.GONE; alpha = 1f; resetCascade(this) }
                 }.start()
         } else {
-            // 两页始终重叠同层，只补完透明度差值
-            old.animate().alpha(0f).setDuration(260L)
-                .setInterpolator(Motion.SMOOTH).start()
-            next.animate().alpha(1f).setDuration(260L)
-                .setInterpolator(Motion.SMOOTH).withEndAction {
-                    old.visibility = View.GONE
-                    old.alpha = 1f
-                    next.alpha = 1f
-                    currentPage = target
-                    onSwipePage?.invoke(target)
-                }.start()
+            // 旧页整体淡出，新页内容级联淡入；两页始终同层同位、不缩放
+            currentPage = target
+            onSwipePage?.invoke(target)   // Dock 立即同步，内容随后逐个跟上
+            fadeOut(old)
+            next.alpha = 1f
+            cascadeIn(next)
         }
         dragging = false
         parent?.requestDisallowInterceptTouchEvent(false)
     }
 
-    /** Dock 点击也使用同一平面的交叉淡化，不改变页面位置或大小。 */
+    /** Dock 点击与滑动松手共用同一套过渡：旧页淡出 + 新页内容级联淡入 */
     private fun transition(old: View, next: View) {
         for (i in 0 until childCount) {
             page(i)?.apply {
@@ -169,17 +175,85 @@ class SwipePageHost @JvmOverloads constructor(
                 scaleY = 1f
             }
         }
-        old.alpha = 1f
-        next.alpha = 0f
-        old.animate().alpha(0f).setDuration(260L)
-            .setInterpolator(Motion.SMOOTH).start()
-        next.animate().alpha(1f).setDuration(260L)
-            .setInterpolator(Motion.SMOOTH).withEndAction {
-                currentPage = indexOfChild(next)
-                old.visibility = View.GONE
-                old.alpha = 1f
-                next.alpha = 1f
-            }.start()
+        currentPage = indexOfChild(next)
+        fadeOut(old)
+        next.alpha = 1f
+        cascadeIn(next)
+    }
+
+    /** 旧页淡出并隐藏。隐藏前校验状态，避免被中途打断后误藏当前页 */
+    private fun fadeOut(view: View) {
+        view.alpha = 1f
+        view.animate().alpha(0f).setDuration(200L)
+            .setInterpolator(Motion.SMOOTH)
+            .withEndAction { hideIfStale(view) }
+            .start()
+        view.postDelayed({ hideIfStale(view) }, 260L)
+    }
+
+    private fun hideIfStale(view: View) {
+        if (currentPage != indexOfChild(view)) {
+            view.visibility = View.GONE
+            view.alpha = 1f
+        }
+    }
+
+    /**
+     * 页面内的信息单元（眉标题、大标题、状态岛、各张卡片），按视觉顺序收集。
+     * 取内容列的直接子 view；页面结构不符合预期时回退为整页淡入。
+     */
+    private fun collectCascadeTargets(page: View): List<View> {
+        val column = when (page) {
+            is ScrollView -> if (page.childCount > 0) page.getChildAt(0) else return listOf(page)
+            is ViewGroup -> if (page.childCount > 0) page.getChildAt(0) else return listOf(page)
+            else -> return listOf(page)
+        }
+        if (column !is ViewGroup) return listOf(page)
+        val out = ArrayList<View>()
+        for (i in 0 until column.childCount) {
+            val v = column.getChildAt(i)
+            if (v is Space || v.visibility == View.GONE) continue
+            out.add(v)
+        }
+        return if (out.isNotEmpty()) out else listOf(page)
+    }
+
+    /** 把页面内容恢复到静止状态，拖动与直接切页前调用，避免残留级联偏移 */
+    private fun resetCascade(page: View) {
+        page.animate().cancel()
+        page.alpha = 1f
+        page.translationY = 0f
+        for (v in collectCascadeTargets(page)) {
+            if (v === page) continue
+            v.animate().cancel()
+            v.alpha = 1f
+            v.translationY = 0f
+        }
+    }
+
+    /** 新页内容从下方逐个淡入，每个单元错开 40ms；页面本身保持不透明 */
+    private fun cascadeIn(page: View) {
+        val targets = collectCascadeTargets(page)
+        var maxDelay = 60L
+        for ((index, v) in targets.withIndex()) {
+            val delay = 60L + index * 40L
+            maxDelay = maxOf(maxDelay, delay)
+            v.alpha = 0f
+            v.translationY = if (v === page) 0f else cascadeTranslation
+            v.animate().alpha(1f).translationY(0f)
+                .setStartDelay(delay)
+                .setDuration(300L)
+                .setInterpolator(Motion.SMOOTH)
+                .withEndAction {
+                    v.alpha = 1f
+                    v.translationY = 0f
+                }.start()
+        }
+        // 兜底：动画被中途取消（用户快速再滑动）时仍把内容归位
+        page.postDelayed({
+            page.alpha = 1f
+            for (v in targets) { v.alpha = 1f; v.translationY = 0f }
+        }, maxDelay + 340L)
     }
 
     private fun stopAnimations() {

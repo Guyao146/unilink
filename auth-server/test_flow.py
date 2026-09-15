@@ -11,6 +11,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -18,8 +19,9 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from aiohttp import web
-from aiohttp.test_utils import AioHTTPTestCase
+from aiohttp.test_utils import AioHTTPTestCase, TestClient, TestServer
 
+import admin as adminmod
 import app as srv
 import config as cfgmod
 from jwtutil import b64u
@@ -488,6 +490,127 @@ class QrPageTest(unittest.TestCase):
                                 qr=qr_svg(payload), app_name="x",
                                 ttl=180, base_url="https://a.test")
         self.assertIn(secret, html)
+
+
+class SetupAndAdminFlowTest(unittest.IsolatedAsyncioTestCase):
+    """后台配置：未配置 → 首次向导 → 运行模式 → 面板登录 → 面板修改"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        d = self.tmp.name
+        # 保存原路径，测完恢复，避免污染同进程的其它测试
+        self._orig = (cfgmod.STATE_DIR, cfgmod.STATE_PATH,
+                      adminmod.SETUP_TOKEN_PATH, adminmod.ADMIN_HASH_PATH)
+        cfgmod.STATE_DIR = d
+        cfgmod.STATE_PATH = os.path.join(d, "state.json")
+        adminmod.SETUP_TOKEN_PATH = os.path.join(d, "setup.token")
+        adminmod.ADMIN_HASH_PATH = os.path.join(d, "admin.hash")
+        self._env = {k: v for k, v in os.environ.items() if k.startswith("UNILINK_")}
+        for k in self._env:
+            del os.environ[k]
+
+    def tearDown(self):
+        self.tmp.cleanup()
+        (cfgmod.STATE_DIR, cfgmod.STATE_PATH,
+         adminmod.SETUP_TOKEN_PATH, adminmod.ADMIN_HASH_PATH) = self._orig
+        os.environ.update(self._env)
+
+    async def test_full_setup_and_admin(self):
+        self.assertIsNone(cfgmod.load_or_none())          # 初始未配置
+        a = srv.build_app(None)
+        self.assertTrue(a["setup_mode"])
+
+        client = TestClient(TestServer(a))
+        await client.start_server()
+        try:
+            # 1) /setup 可访问
+            r = await client.get("/setup")
+            self.assertEqual(r.status, 200)
+            self.assertIn("setup_token", await r.text())
+
+            # 2) 业务端点被网关拦下：浏览器路径 302 到 /setup
+            r = await client.get("/authorize", params={"client_id": "x"},
+                                 allow_redirects=False)
+            self.assertEqual(r.status, 302)
+            self.assertEqual(r.headers["Location"], "/setup")
+
+            # 3) API 返回 503
+            r = await client.get("/api/app/config")
+            self.assertEqual(r.status, 503)
+
+            # 4) 错误的 setup token 被拒
+            r = await client.post("/setup", data={
+                "setup_token": "wrong", "base_url": "https://qr.test",
+                "authentik_url": "https://auth.test", "client_secret": "s" * 48})
+            self.assertIn("无效", await r.text())
+
+            # 5) 正确提交 → 进入运行模式并签发 admin token
+            tok = adminmod.setup_token()
+            r = await client.post("/setup", data={
+                "setup_token": tok,
+                "base_url": "https://qr.test/",
+                "authentik_url": "https://auth.test",
+                "client_id": "unilink-qr",
+                "client_secret": "s" * 48})
+            self.assertEqual(r.status, 200)
+            html = await r.text()
+            self.assertIn("首次配置完成", html)
+            m = re.search(r'<code[^>]*>([A-Za-z0-9_-]{40,})</code>', html)
+            self.assertTrue(m, "页面上找不到 admin token")
+            admin_token = m.group(1)
+            self.assertFalse(a["setup_mode"])              # 已切换到运行模式
+            self.assertFalse(os.path.exists(adminmod.SETUP_TOKEN_PATH))  # 一次性
+            r = await client.get("/setup", allow_redirects=False)
+            self.assertEqual(r.status, 404)                # 配置完成后 /setup 关闭
+
+            # 6) setup 已建立会话 → 直达管理面板
+            r = await client.get("/admin")
+            html = await r.text()
+            self.assertIn("管理面板", html)
+            self.assertIn("https://qr.test", html)
+
+            # 6b) 无 cookie 的客户端 → 登录页；错误令牌被拒；正确登录 302
+            anon = TestClient(TestServer(a))
+            await anon.start_server()
+            try:
+                r = await anon.get("/admin")
+                self.assertIn("管理员令牌", await r.text())
+                r = await anon.post("/admin", data={"admin_token": "nope"})
+                self.assertIn("无效", await r.text())
+                r = await anon.post("/admin", data={"admin_token": admin_token},
+                                    allow_redirects=False)
+                self.assertEqual(r.status, 302)
+            finally:
+                await anon.close()
+
+            # 7) 已登录面板；无 CSRF 提交被拒
+            r = await client.get("/admin")
+            html = await r.text()
+            csrf = re.search(r'name="csrf" value="([^"]+)"', html).group(1)
+            r = await client.post("/admin", data={
+                "base_url": "https://qr.test", "authentik_url": "https://auth.test"})
+            self.assertIn("CSRF", await r.text())
+
+            # 8) 保存：密钥留空 = 沿用，顺带改 TTL 与白名单
+            r = await client.post("/admin", data={
+                "csrf": csrf,
+                "base_url": "https://qr.test",
+                "authentik_url": "https://auth.test",
+                "client_id": "unilink-qr",
+                "client_secret": "",
+                "login_ttl": "300",
+                "allowed_groups": "staff, admins"})
+            self.assertEqual(r.status, 200)
+            self.assertIn("已保存", await r.text())
+
+            cfg = cfgmod.load()
+            self.assertEqual(cfg.base_url, "https://qr.test")
+            self.assertEqual(cfg.login_ttl, 300)
+            self.assertEqual(sorted(cfg.allowed_groups), ["admins", "staff"])
+            self.assertEqual(cfg.client("unilink-qr").client_secret, "s" * 48)
+        finally:
+            await client.close()
+
 
 
 if __name__ == "__main__":

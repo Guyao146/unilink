@@ -58,6 +58,10 @@ docker compose logs -f
 
 升级：`docker compose pull && docker compose up -d`
 
+> 也可以**完全不填 .env**：直接 `docker compose up -d`，服务进入首次配置模式，
+> 打开反代地址的 `/setup` 用日志里的令牌在网页上完成配置；之后用 `/admin` 面板
+> 在线改任何配置。详见 [deploy/README.md](../deploy/README.md)。
+
 详细说明（备份、与 authentik 同网络等）见 [deploy/README.md](../deploy/README.md)。
 
 ---

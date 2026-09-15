@@ -35,6 +35,12 @@ from dataclasses import dataclass, field
 CFG_DIR = os.path.dirname(os.path.abspath(__file__))
 CFG_PATH = os.path.join(CFG_DIR, "config.json")
 
+# 网页后台（首次配置向导 / 管理面板）写入的持久化配置。
+# 容器里挂成卷，重建不丢；优先级低于环境变量与本地 config.json。
+STATE_DIR = (os.environ.get("UNILINK_STATE_DIR")
+             or os.path.join(CFG_DIR, "data"))
+STATE_PATH = os.path.join(STATE_DIR, "state.json")
+
 
 class ConfigError(RuntimeError):
     pass
@@ -131,11 +137,33 @@ def _norm(url: str) -> str:
     return (url or "").rstrip("/")
 
 
+def _read_json(path: str) -> dict:
+    """读配置文件；不存在返回空 dict，损坏时报清楚的错"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f) or {}
+    except FileNotFoundError:
+        return {}
+    except (json.JSONDecodeError, OSError) as e:
+        raise ConfigError("配置文件 %s 无法解析：%s" % (path, e))
+
+
+def save_state(data: dict) -> None:
+    """网页后台保存配置。先写临时文件再原子替换，避免并发读到半截 JSON。"""
+    os.makedirs(STATE_DIR, exist_ok=True)
+    tmp = STATE_PATH + ".tmp"
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, STATE_PATH)
+
+
 def load() -> Config:
-    raw = {}
-    if os.path.exists(CFG_PATH):
-        with open(CFG_PATH, "r", encoding="utf-8") as f:
-            raw = json.load(f)
+    # 优先级：环境变量 > 本地 config.json（开发者/部署者手填）> 网页后台 state
+    raw = dict(_read_json(STATE_PATH))
+    raw.update(_read_json(CFG_PATH))
 
     base_url = _norm(_env("UNILINK_BASE_URL", raw.get("base_url", "")))
     authentik_url = _norm(_env("UNILINK_AUTHENTIK_URL", raw.get("authentik_url", "")))
@@ -147,10 +175,26 @@ def load() -> Config:
         raise ConfigError("缺少 authentik_url（或环境变量 UNILINK_AUTHENTIK_URL）"
                           "：authentik 根地址，例如 https://auth.example.com")
 
-    clients_raw = raw.get("clients") or []
+    clients_raw = []
     env_clients = _env("UNILINK_CLIENTS")
     if env_clients:
         clients_raw = json.loads(env_clients)
+    elif raw.get("clients"):
+        clients_raw = raw["clients"]
+    else:
+        # 既没有 UNILINK_CLIENTS 也没有 clients 数组时，用零散字段拼装一个 ——
+        # 覆盖「.env 只填单值」和「网页后台填 client_id + secret」两种情形
+        cid = str(_env("UNILINK_CLIENT_ID",
+                       raw.get("client_id", "unilink-qr")) or "unilink-qr").strip()
+        sec = str(_env("UNILINK_CLIENT_SECRET",
+                       raw.get("client_secret", "")) or "")
+        if cid and sec:
+            clients_raw = [{
+                "name": "authentik",
+                "client_id": cid,
+                "client_secret": sec,
+                "redirect_uris": [authentik_url + "/source/oauth/callback/" + cid + "/"],
+            }]
 
     clients = {}
     for c in clients_raw:
@@ -197,3 +241,11 @@ def load() -> Config:
               "生产环境请务必用 Nginx/Caddy 反代为 https")
 
     return cfg
+
+
+def load_or_none():
+    """已配置返回 Config；缺必填项返回 None（调用方据此进入首次配置模式）"""
+    try:
+        return load()
+    except ConfigError:
+        return None

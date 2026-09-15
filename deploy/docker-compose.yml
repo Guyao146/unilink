@@ -20,19 +20,16 @@ services:
     ports:
       - "127.0.0.1:${UNILINK_PORT:-8790}:${UNILINK_PORT:-8790}"
 
-    # 所有配置都在同目录的 .env 里改；这一份 environment 做两件事：
-    # 1) 必填项空着时，docker compose up 当场报错并指名缺哪一项，不必等容器启动
-    # 2) 可选项留空时给出与代码内一致的默认值
+    # 所有配置都在同目录的 .env 里改；全部留空时服务会自动进入「首次配置模式」：
+    # 打开反代后的 https 地址 /setup，用日志里的令牌在网页上完成配置。
+    # 这一份 environment 的作用是给可选项提供默认值，并让 .env 的写法生效。
     env_file: .env
 
     environment:
-      # ── 必填 ──
-      # 本服务对外可访问的根地址（反代后的 https 地址，会写进 OIDC 发现文档）
-      UNILINK_BASE_URL: ${UNILINK_BASE_URL:?请在 .env 中设置 UNILINK_BASE_URL}
-      # authentik 根地址
-      UNILINK_AUTHENTIK_URL: ${UNILINK_AUTHENTIK_URL:?请在 .env 中设置 UNILINK_AUTHENTIK_URL}
-      # 客户端密钥；须与 authentik 里该 OAuth Source 的 Consumer secret 一致（>= 24 位）
-      UNILINK_CLIENT_SECRET: ${UNILINK_CLIENT_SECRET:?请在 .env 中设置 UNILINK_CLIENT_SECRET}
+      # ── 必填（留空 → 进入首次配置模式，不阻塞启动）──
+      UNILINK_BASE_URL: ${UNILINK_BASE_URL:-}
+      UNILINK_AUTHENTIK_URL: ${UNILINK_AUTHENTIK_URL:-}
+      UNILINK_CLIENT_SECRET: ${UNILINK_CLIENT_SECRET:-}
 
       # ── 可选（留空即用默认值）──
       UNILINK_CLIENT_ID: ${UNILINK_CLIENT_ID:-unilink-qr}
@@ -47,18 +44,16 @@ services:
       UNILINK_ALLOWED_SUBS: ${UNILINK_ALLOWED_SUBS:-}
       UNILINK_ALLOWED_GROUPS: ${UNILINK_ALLOWED_GROUPS:-}
 
-      # 下游客户端（即 authentik 里的 OAuth Source），由上面的值自动拼装，
-      # 省去在容器里维护 config.json
-      UNILINK_CLIENTS: >-
-        [{"name":"authentik",
-          "client_id":"${UNILINK_CLIENT_ID:-unilink-qr}",
-          "client_secret":"${UNILINK_CLIENT_SECRET}",
-          "redirect_uris":["${UNILINK_AUTHENTIK_URL}/source/oauth/callback/${UNILINK_CLIENT_ID:-unilink-qr}/"]}]
+      # 客户端（authentik 里的 OAuth Source）由 client_id / client_secret /
+      # authentik_url 自动拼装，无需手写 JSON。
+      # 若要完全自定义（多个客户端等），设 UNILINK_CLIENTS 为 JSON 数组即可覆盖。
 
     volumes:
       # RSA 签名私钥必须持久化 —— 丢了等于换发卡机构，
       # authentik 缓存的公钥会验签失败
       - unilink-keys:/app/keys
+      # 网页后台写入的配置（首次向导 / 管理面板）。留空走 .env 时此卷可有可无
+      - unilink-data:/app/data
 
     # authentik 也在 Docker 里时，取消下面注释即可走容器名直连，
     # 免去出公网绕一圈（网络名用 docker network ls 查）。
@@ -69,6 +64,7 @@ services:
 
 volumes:
   unilink-keys:
+  unilink-data:
 
 # networks:
 #   authentik:

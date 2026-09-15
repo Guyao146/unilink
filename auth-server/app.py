@@ -25,9 +25,11 @@ UniLink 扫码登录服务（OIDC Provider）
 """
 import json
 import logging
+import os
 import secrets
 import sys
 import time
+from html import escape as _esc
 from urllib.parse import urlencode
 
 import aiohttp
@@ -37,12 +39,19 @@ import config
 import identity as ident
 import store as st
 from jwtutil import Signer
-from pages import render_scan_page, render_error_page
+from pages import (render_admin_login_page, render_admin_page, render_error_page,
+                   render_scan_page, render_setup_page)
 from qr import qr_svg
+import admin as adminmod
 
 log = logging.getLogger("unilink.auth")
 
 ROUTES = web.RouteTableDef()
+
+SESSION_COOKIE = "unilink_admin_sid"
+CSRF_COOKIE = "unilink_admin_csrf"
+# 未配置时只有这些路径可用，其余一律引导去 /setup
+SETUP_ALLOWED_PATHS = {"/setup", "/healthz"}
 
 
 # ======================================================================
@@ -83,6 +92,67 @@ def _basic_auth(request):
         return cid, sec
     except Exception:
         return None, None
+
+
+
+# ======================================================================
+# 后台配置：cookie / 会话 / setup 模式网关
+# ======================================================================
+
+def _is_secure(request) -> bool:
+    """在反代后面时按 X-Forwarded-Proto 判断真实 scheme，决定 cookie 是否带 Secure"""
+    proto = (request.headers.get("X-Forwarded-Proto", "")
+             or request.headers.get("X-Forwarded-Protocol", "")).lower()
+    if proto:
+        return proto == "https"
+    return request.url.scheme == "https"
+
+
+def _sid(request) -> str:
+    return request.cookies.get(SESSION_COOKIE, "")
+
+
+def _set_session_cookies(resp, request, sid: str, csrf: str) -> None:
+    common = {"path": "/", "samesite": "Strict",
+              "secure": _is_secure(request),
+              "max_age": adminmod.SESSION_MAX_AGE}
+    resp.set_cookie(SESSION_COOKIE, sid, httponly=True, **common)
+    # CSRF cookie 不能是 HttpOnly：前端要读它做双重提交
+    resp.set_cookie(CSRF_COOKIE, csrf, **common)
+
+
+def _clear_session_cookies(resp, request) -> None:
+    kw = {"path": "/", "secure": _is_secure(request), "samesite": "Strict"}
+    resp.del_cookie(SESSION_COOKIE, **kw)
+    resp.del_cookie(CSRF_COOKIE, **kw)
+
+
+@web.middleware
+async def _setup_gate(request, handler):
+    """未配置时只放行 /setup 与 /healthz，其余一律引导去配置，避免带空配置对外服务"""
+    if request.app.get("setup_mode") and request.path not in SETUP_ALLOWED_PATHS:
+        if request.path.startswith("/api/") or request.path.startswith("/.well-known"):
+            return _json({"error": "not_configured",
+                          "error_description": "服务尚未完成首次配置，请打开 /setup"}, 503)
+        raise web.HTTPFound("/setup")
+    return await handler(request)
+
+
+def _reload_config(app) -> bool:
+    """后台保存配置后热切换。已配置则更新配置并重建 store（进行中的会话失效）"""
+    cfg = config.load_or_none()
+    if cfg is None:
+        return False
+    app["cfg"] = cfg
+    app["store"] = st.Store(cfg.login_ttl, cfg.code_ttl, cfg.token_ttl,
+                            cfg.max_sessions)
+    if app.get("setup_mode"):
+        app["setup_mode"] = False
+        app["signer"] = Signer()
+        log.info("首次配置完成，服务切换到正常运行模式：issuer=%s", cfg.issuer)
+    else:
+        log.info("管理面板已更新配置并即时生效")
+    return True
 
 
 # ======================================================================
@@ -396,6 +466,115 @@ async def scan_deny(request):
 
 
 # ======================================================================
+# ======================================================================
+# 后台配置：首次向导 + 管理面板
+# ======================================================================
+
+def _html(text: str, extra_headers=None):
+    headers = {"Cache-Control": "no-store"}
+    if extra_headers:
+        headers.update(extra_headers)
+    return web.Response(text=text, content_type="text/html", charset="utf-8",
+                        headers=headers)
+
+
+@ROUTES.get("/setup")
+async def setup_page(request):
+    if not request.app.get("setup_mode"):
+        # 配置完成后 /setup 永久关闭，不能被用来重置配置
+        raise web.HTTPNotFound()
+    return _html(render_setup_page())
+
+
+@ROUTES.post("/setup")
+async def setup_save(request):
+    app = request.app
+    if not app.get("setup_mode"):
+        raise web.HTTPNotFound()
+    form = await request.post()
+
+    if not adminmod.consume_setup_token(form.get("setup_token", "")):
+        return _html(render_setup_page(form, "setup token 无效或已被使用过"))
+
+    data, err = adminmod.validate_setup_form(form)
+    if err:
+        return _html(render_setup_page(form, err))
+
+    config.save_state(data)
+    if not _reload_config(app):
+        return _html(render_setup_page(form, "配置已保存，但仍有必填项缺失，请补全"))
+
+    # 生成管理员令牌：明文只在这里出现一次，磁盘上只存哈希
+    token = adminmod.issue_admin_token()
+    sid, csrf = adminmod.create_session()
+    notice = ("首次配置完成，服务已切换到正常运行模式。<br>"
+              "<b>请立即妥善保存下面的管理员令牌</b>（只显示这一次，关闭页面后无法再看，"
+              "丢失只能删除服务器上的 <code>data/admin.hash</code> 后重新配置）：<br>"
+              "<code style=\"word-break:break-all\">%s</code>" % _esc(token))
+    resp = _html(render_admin_page(adminmod.current_state(app["cfg"]), csrf=csrf,
+                                   notice=notice))
+    _set_session_cookies(resp, request, sid, csrf)
+    log.info("首次配置完成，已签发管理员令牌（只显示一次）")
+    return resp
+
+
+@ROUTES.get("/admin")
+async def admin_page(request):
+    app = request.app
+    if app.get("setup_mode"):
+        raise web.HTTPFound("/setup")
+    csrf = adminmod.session_csrf(_sid(request))
+    if not csrf:
+        return _html(render_admin_login_page())
+    return _html(render_admin_page(adminmod.current_state(app["cfg"]), csrf=csrf))
+
+
+@ROUTES.post("/admin")
+async def admin_post(request):
+    app = request.app
+    if app.get("setup_mode"):
+        raise web.HTTPFound("/setup")
+    form = await request.post()
+    csrf = adminmod.session_csrf(_sid(request))
+    values = adminmod.current_state(app["cfg"])
+
+    # —— 登录 ——
+    if form.get("admin_token"):
+        if adminmod.check_admin_token(form.get("admin_token", "")):
+            sid, new_csrf = adminmod.create_session()
+            resp = web.HTTPFound("/admin")
+            _set_session_cookies(resp, request, sid, new_csrf)
+            return resp
+        return _html(render_admin_login_page("管理员令牌无效"))
+
+    # —— 保存配置 ——
+    if not csrf:
+        return _html(render_admin_login_page("登录已过期，请重新登录"))
+    if not secrets.compare_digest(form.get("csrf", "") or "", csrf):
+        return _html(render_admin_page(values, csrf=csrf,
+                                       error="CSRF 校验失败，请刷新页面重试"))
+
+    cur = adminmod._read_state()
+    data, err = adminmod.validate_admin_form(
+        form, current_secret=(cur or {}).get("client_secret", ""))
+    if err:
+        return _html(render_admin_page(values, csrf=csrf, error=err))
+
+    config.save_state(data)
+    _reload_config(app)
+    return _html(render_admin_page(adminmod.current_state(app["cfg"]), csrf=csrf,
+                                   notice="配置已保存并即时生效。"))
+
+
+@ROUTES.get("/admin/logout")
+async def admin_logout(request):
+    adminmod.drop_session(_sid(request))
+    resp = web.HTTPFound("/admin")
+    _clear_session_cookies(resp, request)
+    return resp
+
+
+
 # 启动
 # ======================================================================
 
@@ -407,12 +586,16 @@ async def _on_cleanup(app):
     await app["http"].close()
 
 
-def build_app(cfg, key_path: str = None) -> web.Application:
-    app = web.Application()
+def build_app(cfg=None, key_path: str = None) -> web.Application:
+    """cfg 为 None 时进入首次配置模式：只有 /setup 与 /healthz 可用，业务端点被网关拦下"""
+    setup_mode = cfg is None
+    app = web.Application(middlewares=[_setup_gate])
     app["cfg"] = cfg
-    app["store"] = st.Store(cfg.login_ttl, cfg.code_ttl, cfg.token_ttl,
-                            cfg.max_sessions)
-    app["signer"] = Signer(key_path) if key_path else Signer()
+    app["setup_mode"] = setup_mode
+    if not setup_mode:
+        app["store"] = st.Store(cfg.login_ttl, cfg.code_ttl, cfg.token_ttl,
+                                cfg.max_sessions)
+        app["signer"] = Signer(key_path) if key_path else Signer()
     app.add_routes(ROUTES)
     app.on_startup.append(_on_startup)
     app.on_cleanup.append(_on_cleanup)
@@ -423,15 +606,17 @@ def main():
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s",
                         datefmt="%H:%M:%S")
-    try:
-        cfg = config.load()
-    except config.ConfigError as e:
-        print("[配置错误] %s" % e)
-        print("Docker 部署：请检查 compose 同目录的 .env（复制 deploy/.env.example），"
-              "所有项均可在其中修改。")
-        print("直接运行：请复制 config.example.json 为 config.json 并填写，"
-              "或设置对应环境变量。")
-        sys.exit(1)
+    cfg = config.load_or_none()
+    if cfg is None:
+        # 未配置不退出：进入首次配置模式，等管理员在网页上填好
+        host = os.environ.get("UNILINK_HOST", "0.0.0.0")
+        port = int(os.environ.get("UNILINK_PORT", "8790"))
+        log.warning("检测到必填配置缺失，进入「首次配置模式」。")
+        log.warning("请在浏览器打开反代后的 https 地址的 /setup，"
+                    "用日志中的 setup token 完成配置。")
+        adminmod.setup_token()          # 生成并打印一次性令牌
+        web.run_app(build_app(None), host=host, port=port, print=None)
+        return
 
     app = build_app(cfg)
     log.info("UniLink 扫码登录服务已启动")
@@ -440,6 +625,7 @@ def main():
     log.info("  已注册客户端      : %s", "、".join(cfg.clients))
     log.info("  签名 kid          : %s", app["signer"].kid)
     log.info("  发现文档          : %s/.well-known/openid-configuration", cfg.base_url)
+    log.info("  管理面板          : %s/admin", cfg.base_url)
     web.run_app(app, host=cfg.host, port=cfg.port, print=None)
 
 

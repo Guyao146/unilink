@@ -1,6 +1,6 @@
 # 一键部署（预构建镜像）
 
-不需要 clone 源码，两个文件就能跑起来。
+不需要 clone 源码，一个 compose 文件就能跑起来（配置也可以全部在网页上填，见下文）。
 
 ```bash
 mkdir -p /opt/unilink-auth && cd /opt/unilink-auth
@@ -25,6 +25,34 @@ UniLink 扫码登录服务已启动
   已注册客户端      : unilink-qr
   签名 kid          : xxxxxxxx
 ```
+
+## 网页后台配置（推荐：不碰文件）
+
+上述流程需要编辑 `.env`。如果不想改文件，**可以全部留空直接启动**——服务会自动进入「首次配置模式」：
+
+```bash
+mkdir -p /opt/unilink-auth && cd /opt/unilink-auth
+
+curl -O  https://raw.githubusercontent.com/Guyao146/unilink/main/deploy/docker-compose.yml
+
+docker compose up -d                                # 直接起，先不填配置
+docker compose logs | grep 首次配置                 # 拿到一次性 setup 令牌
+```
+
+然后浏览器打开反代后的 https 地址（如 `https://gateway.example.com/setup`）：
+
+1. 粘贴日志里的 setup 令牌（也在服务器 `data/setup.token` 文件里）
+2. 填 base_url、authentik 根地址、客户端密钥
+3. 保存 → 服务**立即切换到正常运行模式**，无需重启
+4. 页面上会显示**管理员令牌**（只出现这一次，请立刻保存）
+
+之后随时打开 `/admin` 用管理员令牌登录，在线改任何配置（时效、白名单、密钥……），保存即生效。
+
+> 令牌丢了？删掉服务器上的 `data/admin.hash` 后 `docker compose restart`，
+> 服务会回到未配置状态，重新走一遍向导（state.json 仍在的话直接在面板里改也行）。
+
+> 安全提醒：`/setup` 与 `/admin` 务必只经 https 反代访问。setup 令牌一次性、
+> 管理员令牌磁盘上只存 sha256，但被别人拿到依然能改走 `client_secret`。
 
 ## 改配置：全都在 .env 里
 
@@ -102,12 +130,14 @@ docker compose down                            # 停止（keys 卷保留）
 
 RSA 签名私钥存在名为 `unilink-keys` 的 named volume 里，容器重建不丢。
 **不要删这个卷** —— 删了等于换发卡机构，authentik 缓存的公钥会验签失败。
+网页后台的配置存在 `unilink-data` 卷里，备份时一起带上。
 
 备份：
 
 ```bash
-docker run --rm -v unilink-auth_unilink-keys:/k -v "$PWD":/b alpine \
-    tar czf /b/unilink-keys-backup.tar.gz -C /k .
+docker run --rm -v unilink-auth_unilink-keys:/k \
+    -v unilink-auth_unilink-data:/d -v "$PWD":/b alpine \
+    tar czf /b/unilink-backup.tar.gz -C /k . -C /d .
 ```
 
 ## 与 authentik 同网络（可选）

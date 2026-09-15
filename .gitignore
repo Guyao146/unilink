@@ -12,6 +12,7 @@ pc-client/config.json
 auth-server/config.json
 auth-server/keys/
 auth-server/.env
+auth-server/data/
 deploy/.env
 
 # ===== Android 构建产物 =====

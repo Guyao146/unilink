@@ -16,7 +16,7 @@ COPY *.py ./
 # 以非 root 运行。keys/ 需要可写（首次启动生成 RSA 签名私钥），
 # 因此目录归属交给该用户，并在编排文件里挂成持久卷。
 RUN useradd --system --create-home --uid 10001 unilink \
- && mkdir -p /app/keys \
+ && mkdir -p /app/keys /app/data \
  && chown -R unilink:unilink /app
 USER unilink
 

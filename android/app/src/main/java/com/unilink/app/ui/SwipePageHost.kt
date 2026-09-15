@@ -202,7 +202,9 @@ class SwipePageHost @JvmOverloads constructor(
     }
 
     private fun hideIfStale(view: View) {
-        if (currentPage != indexOfChild(view)) {
+        // 快速反向滑动时，旧页的隐藏回调可能在该页已成为新的拖动目标时才触发，
+        // 此时把它藏掉会让两页同时透明——正是白屏的来源
+        if (currentPage != indexOfChild(view) && activeTarget != indexOfChild(view)) {
             view.visibility = View.GONE
             view.alpha = 1f
         }

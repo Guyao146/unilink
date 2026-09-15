@@ -27,7 +27,6 @@ import json
 import logging
 import os
 import secrets
-import sys
 import time
 from html import escape as _esc
 from urllib.parse import urlencode

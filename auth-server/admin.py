@@ -242,9 +242,6 @@ def _read_state() -> dict:
 # 登录会话（服务端内存，重启即失效）
 # ======================================================================
 
-import threading
-import time
-
 _sessions = {}
 _lock = threading.Lock()
 

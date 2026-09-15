@@ -34,7 +34,7 @@ jobs:
 
       - name: Lint
         working-directory: auth-server
-        run: python -m pyflakes app.py config.py store.py identity.py jwtutil.py qr.py pages.py test_flow.py
+        run: python -m pyflakes app.py admin.py config.py store.py identity.py jwtutil.py qr.py pages.py test_flow.py
 
       - name: Run tests
         working-directory: auth-server

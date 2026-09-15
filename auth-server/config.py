@@ -3,13 +3,16 @@
 UniLink 扫码登录服务配置
 =========================
 配置来源优先级：环境变量 > config.json > 内置默认值。
+Docker 部署只需维护 compose 同目录的一份 .env，所有项都能在其中修改；
+config.json 仅在不使用 Docker 时才需要。
 
 必填项（缺失时启动即报错，避免带着不安全默认值上线）：
   UNILINK_BASE_URL          本服务对外可访问的根地址，如 https://qr.example.com
   UNILINK_AUTHENTIK_URL     authentik 根地址，如 https://auth.example.com
+  UNILINK_CLIENT_SECRET     下游客户端密钥（与 authentik OAuth Source 的 Consumer secret 一致）
   UNILINK_CLIENTS           下游客户端列表（即 authentik 的 OAuth Source）
 
-CLIENTS 结构（config.json 中）：
+CLIENTS 结构（config.json 中，或 compose 拼装的 UNILINK_CLIENTS 环境变量）：
   "clients": [
     {
       "client_id": "authentik",
@@ -18,6 +21,11 @@ CLIENTS 结构（config.json 中）：
       "name": "authentik"
     }
   ]
+
+所有可选项同样可用环境变量覆盖，例如：
+  UNILINK_LOGIN_TTL / UNILINK_CODE_TTL / UNILINK_TOKEN_TTL
+  UNILINK_MAX_SESSIONS / UNILINK_APP_SCOPES
+  UNILINK_ALLOWED_SUBS / UNILINK_ALLOWED_GROUPS（逗号或空白分隔多个值）
 """
 import json
 import os
@@ -100,6 +108,25 @@ def _env(key: str, default=None):
     return v if v not in (None, "") else default
 
 
+def _int(key: str, default):
+    """整数型配置项。格式不对时报清楚的错，而不是抛 ValueError 让人摸不着头脑"""
+    v = _env(key)
+    if v is None:
+        return default
+    try:
+        return int(str(v).strip())
+    except ValueError:
+        raise ConfigError("%s 必须是整数（当前值 %r）" % (key, v))
+
+
+def _frozenset(val):
+    """白名单既可以是 .env 里的逗号/空白分隔字符串，也可以是 config.json 里的列表"""
+    if not val:
+        return frozenset()
+    items = val.replace(",", " ").split() if isinstance(val, str) else val
+    return frozenset(str(t).strip() for t in items if str(t).strip())
+
+
 def _norm(url: str) -> str:
     return (url or "").rstrip("/")
 
@@ -143,18 +170,27 @@ def load() -> Config:
 
     cfg = Config(base_url=base_url, authentik_url=authentik_url, clients=clients)
 
+    # 每一项都允许「环境变量 > config.json > 代码内默认值」。
+    # Docker 部署时只需维护一份 .env，不必再往镜像里塞 config.json。
     cfg.host = _env("UNILINK_HOST", raw.get("host", cfg.host))
-    cfg.port = int(_env("UNILINK_PORT", raw.get("port", cfg.port)))
+    cfg.port = _int("UNILINK_PORT", raw.get("port", cfg.port))
     cfg.app_client_id = _env("UNILINK_APP_CLIENT_ID",
                              raw.get("app_client_id", cfg.app_client_id))
     cfg.app_redirect_uri = _env("UNILINK_APP_REDIRECT_URI",
                                 raw.get("app_redirect_uri", cfg.app_redirect_uri))
-    cfg.login_ttl = int(raw.get("login_ttl", cfg.login_ttl))
-    cfg.code_ttl = int(raw.get("code_ttl", cfg.code_ttl))
-    cfg.max_sessions = int(raw.get("max_sessions", cfg.max_sessions))
-    cfg.app_scopes = raw.get("app_scopes", cfg.app_scopes)
-    cfg.allowed_subs = frozenset(raw.get("allowed_subs") or ())
-    cfg.allowed_groups = frozenset(raw.get("allowed_groups") or ())
+    cfg.app_scopes = _env("UNILINK_APP_SCOPES",
+                          raw.get("app_scopes", cfg.app_scopes))
+    cfg.login_ttl = _int("UNILINK_LOGIN_TTL", raw.get("login_ttl", cfg.login_ttl))
+    cfg.code_ttl = _int("UNILINK_CODE_TTL", raw.get("code_ttl", cfg.code_ttl))
+    cfg.token_ttl = _int("UNILINK_TOKEN_TTL", raw.get("token_ttl", cfg.token_ttl))
+    cfg.id_token_ttl = _int("UNILINK_ID_TOKEN_TTL",
+                            raw.get("id_token_ttl", cfg.id_token_ttl))
+    cfg.max_sessions = _int("UNILINK_MAX_SESSIONS",
+                            raw.get("max_sessions", cfg.max_sessions))
+    cfg.allowed_subs = _frozenset(_env("UNILINK_ALLOWED_SUBS",
+                                       raw.get("allowed_subs")))
+    cfg.allowed_groups = _frozenset(_env("UNILINK_ALLOWED_GROUPS",
+                                         raw.get("allowed_groups")))
 
     if base_url.startswith("http://") and not base_url.startswith("http://127.0.0.1"):
         print("[警告] base_url 不是 https —— 授权码与令牌将以明文传输，"

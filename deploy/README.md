@@ -26,6 +26,32 @@ UniLink 扫码登录服务已启动
   签名 kid          : xxxxxxxx
 ```
 
+## 改配置：全都在 .env 里
+
+**所有配置项都在 compose 同目录的 `.env` 里改**，不需要进容器、也不需要 `config.json`：
+改完执行 `docker compose up -d` 即生效。完整列表见 `.env.example` 的注释。
+
+| .env 变量 | 说明 | 默认值 |
+|------|------|------|
+| `UNILINK_BASE_URL` | 本服务对外的 https 根地址（**必填**） | — |
+| `UNILINK_AUTHENTIK_URL` | authentik 根地址（**必填**） | — |
+| `UNILINK_CLIENT_SECRET` | 与 authentik OAuth Source 的 Consumer secret 一致（**必填**） | — |
+| `UNILINK_CLIENT_ID` | 下游客户端 ID | `unilink-qr` |
+| `UNILINK_APP_CLIENT_ID` | 手机 App 的 public client | `unilink-mobile` |
+| `UNILINK_APP_REDIRECT_URI` | App 回调 scheme | `unilink://auth/callback` |
+| `UNILINK_APP_SCOPES` | App 申请的 scopes | `openid profile email offline_access` |
+| `UNILINK_LOGIN_TTL` | 二维码 / 登录会话有效期（秒） | `180` |
+| `UNILINK_CODE_TTL` | 授权码有效期（秒） | `60` |
+| `UNILINK_TOKEN_TTL` | 本服务签发的令牌有效期（秒） | `300` |
+| `UNILINK_MAX_SESSIONS` | 同时存活的扫码会话上限 | `500` |
+| `UNILINK_ALLOWED_SUBS` | 允许扫码的 authentik sub，逗号/空白分隔；留空不限制 | — |
+| `UNILINK_ALLOWED_GROUPS` | 允许扫码的 authentik 组，同上 | — |
+| `UNILINK_PORT` | 监听端口（改了反代与自检命令里的 8790 也要同步） | `8790` |
+
+> **缺必填项不会静默启动**：`.env` 里 `UNILINK_BASE_URL` / `UNILINK_AUTHENTIK_URL` /
+> `UNILINK_CLIENT_SECRET` 任一为空，`docker compose up` 会**当场报错并指名缺哪一项**，
+> 不必等容器起来再翻日志。
+
 自检：
 
 ```bash

@@ -18,18 +18,42 @@ services:
     restart: unless-stopped
 
     ports:
-      - "127.0.0.1:8790:8790"
+      - "127.0.0.1:${UNILINK_PORT:-8790}:${UNILINK_PORT:-8790}"
 
+    # 所有配置都在同目录的 .env 里改；这一份 environment 做两件事：
+    # 1) 必填项空着时，docker compose up 当场报错并指名缺哪一项，不必等容器启动
+    # 2) 可选项留空时给出与代码内一致的默认值
     env_file: .env
 
     environment:
-      # 下游客户端（即 authentik 里的 OAuth Source）。
-      # 用环境变量拼装，省去在容器里维护 config.json。
+      # ── 必填 ──
+      # 本服务对外可访问的根地址（反代后的 https 地址，会写进 OIDC 发现文档）
+      UNILINK_BASE_URL: ${UNILINK_BASE_URL:?请在 .env 中设置 UNILINK_BASE_URL}
+      # authentik 根地址
+      UNILINK_AUTHENTIK_URL: ${UNILINK_AUTHENTIK_URL:?请在 .env 中设置 UNILINK_AUTHENTIK_URL}
+      # 客户端密钥；须与 authentik 里该 OAuth Source 的 Consumer secret 一致（>= 24 位）
+      UNILINK_CLIENT_SECRET: ${UNILINK_CLIENT_SECRET:?请在 .env 中设置 UNILINK_CLIENT_SECRET}
+
+      # ── 可选（留空即用默认值）──
+      UNILINK_CLIENT_ID: ${UNILINK_CLIENT_ID:-unilink-qr}
+      UNILINK_APP_CLIENT_ID: ${UNILINK_APP_CLIENT_ID:-unilink-mobile}
+      UNILINK_APP_REDIRECT_URI: ${UNILINK_APP_REDIRECT_URI:-unilink://auth/callback}
+      UNILINK_APP_SCOPES: ${UNILINK_APP_SCOPES:-openid profile email offline_access}
+      UNILINK_LOGIN_TTL: ${UNILINK_LOGIN_TTL:-180}
+      UNILINK_CODE_TTL: ${UNILINK_CODE_TTL:-60}
+      UNILINK_TOKEN_TTL: ${UNILINK_TOKEN_TTL:-300}
+      UNILINK_MAX_SESSIONS: ${UNILINK_MAX_SESSIONS:-500}
+      # 白名单：逗号或空白分隔多个 sub / group，留空表示不限制
+      UNILINK_ALLOWED_SUBS: ${UNILINK_ALLOWED_SUBS:-}
+      UNILINK_ALLOWED_GROUPS: ${UNILINK_ALLOWED_GROUPS:-}
+
+      # 下游客户端（即 authentik 里的 OAuth Source），由上面的值自动拼装，
+      # 省去在容器里维护 config.json
       UNILINK_CLIENTS: >-
         [{"name":"authentik",
           "client_id":"${UNILINK_CLIENT_ID:-unilink-qr}",
-          "client_secret":"${UNILINK_CLIENT_SECRET:?必须在 .env 中设置 UNILINK_CLIENT_SECRET}",
-          "redirect_uris":["${UNILINK_AUTHENTIK_URL:?必须设置}/source/oauth/callback/${UNILINK_CLIENT_ID:-unilink-qr}/"]}]
+          "client_secret":"${UNILINK_CLIENT_SECRET}",
+          "redirect_uris":["${UNILINK_AUTHENTIK_URL}/source/oauth/callback/${UNILINK_CLIENT_ID:-unilink-qr}/"]}]
 
     volumes:
       # RSA 签名私钥必须持久化 —— 丢了等于换发卡机构，

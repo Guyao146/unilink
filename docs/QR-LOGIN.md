@@ -231,7 +231,7 @@ Authorization Code + PKCE。
 |------|-----|
 | Name | `UniLink 手机端` |
 | Client type | **Public** ← 手机 App 无法保管密钥，必须是 public + PKCE |
-| Client ID | `unilink-mobile`（与 config.json 的 `app_client_id` 一致） |
+| Client ID | `unilink-mobile`（与 `.env` 的 `UNILINK_APP_CLIENT_ID` 一致） |
 | Redirect URIs | `unilink://auth/callback` |
 | Scopes | `openid`、`profile`、`email`、`offline_access` |
 
@@ -264,8 +264,8 @@ Authorization Code + PKCE。
 | 扫码后 App 提示"不是 UniLink 登录码" | 二维码里的 `srv` 不是 https。生产环境请配好 TLS |
 | App 提示"服务器不一致" | 二维码指向的服务与 App 登录时用的不是同一个 —— 正常情况下这是钓鱼拦截 |
 | 确认时提示"令牌已失效" | authentik 侧 refresh_token 过期或被吊销，重新登录即可。若频繁出现，检查 Provider 是否给了 `offline_access` |
-| `invalid_client` | config.json 的 `client_secret` 与 authentik Source 里的 Consumer secret 不一致 |
-| 二维码总是过期 | 默认 180 秒。若网络慢可调大 `config.json` 的 `login_ttl` |
+| `invalid_client` | `.env` 的 `UNILINK_CLIENT_SECRET` 与 authentik Source 里的 Consumer secret 不一致 |
+| 二维码总是过期 | 默认 180 秒。若网络慢可调大 `.env` 的 `UNILINK_LOGIN_TTL` |
 | 换机后无法登录 | Keystore 密钥不随备份迁移，属预期行为，重新登录即可 |
 
 ## 安全边界
@@ -282,7 +282,7 @@ Authorization Code + PKCE。
 * 同时存活的扫码会话有上限（默认 500，见 `max_sessions`），防止刷 `/authorize` 打爆内存。
 * 单实例内存存储：重启会让正在扫码的用户重试一次。要多实例横向扩展需把
   `store.py` 换成 Redis 实现。
-* `keys/` 与 `config.json` 已在 `.gitignore` 中，切勿提交。
+* `keys/` 与 `.env`（含客户端密钥）已在 `.gitignore` 中，切勿提交。
 
 ## 附录：二维码与接口约定
 

@@ -11,6 +11,8 @@ pc-client/config.json
 # 扫码登录服务的本地配置与签名私钥（切勿提交！）
 auth-server/config.json
 auth-server/keys/
+auth-server/.env
+deploy/.env
 
 # ===== Android 构建产物 =====
 **/build/

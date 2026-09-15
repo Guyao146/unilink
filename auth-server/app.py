@@ -427,7 +427,9 @@ def main():
         cfg = config.load()
     except config.ConfigError as e:
         print("[配置错误] %s" % e)
-        print("请复制 config.example.json 为 config.json 并填写，"
+        print("Docker 部署：请检查 compose 同目录的 .env（复制 deploy/.env.example），"
+              "所有项均可在其中修改。")
+        print("直接运行：请复制 config.example.json 为 config.json 并填写，"
               "或设置对应环境变量。")
         sys.exit(1)
 

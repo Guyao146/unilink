@@ -188,6 +188,9 @@ async def jwks(request):
 
 @ROUTES.get("/healthz")
 async def healthz(request):
+    # setup 模式下 store/signer 尚未创建；健康检查只回报「待配置」
+    if request.app.get("setup_mode"):
+        return _json({"ok": False, "status": "setup_required"})
     return _json({"ok": True, **request.app["store"].stats()})
 
 

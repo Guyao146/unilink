@@ -5,9 +5,6 @@
 
 两种令牌：
 
-  setup_token  一次性。服务检测到尚未配置时生成，打印到日志并显示在向导页面上；
-               用一次即删 —— 配置完成后 /setup 不再可用，无法被用来重置配置。
-
   admin_token  常驻面板的登录凭据。首次配置完成时生成，**明文只显示一次**，
                磁盘上只存 sha256。忘了就删掉 data/admin.hash 再重启，
                服务会重新回到「未配置」状态走一遍向导。
@@ -31,7 +28,6 @@ import time
 
 import config as cfgmod
 
-SETUP_TOKEN_PATH = os.path.join(cfgmod.STATE_DIR, "setup.token")
 ADMIN_HASH_PATH = os.path.join(cfgmod.STATE_DIR, "admin.hash")
 
 # 可调的整数项：键 -> (中文说明, 下限, 上限)
@@ -65,30 +61,6 @@ def _read_file(path: str) -> str:
             return f.read().strip()
     except OSError:
         return ""
-
-
-def setup_token() -> str:
-    """返回当前有效的 setup token；不存在时生成并打印到日志（只打印这一次）"""
-    tok = _read_file(SETUP_TOKEN_PATH)
-    if tok:
-        return tok
-    tok = secrets.token_urlsafe(32)
-    _write_file(SETUP_TOKEN_PATH, tok)
-    print("[首次配置] 服务尚未配置完成，请打开反代后的 https 地址的 /setup")
-    print("[首次配置] 输入下面这个一次性令牌（也可在 data/setup.token 文件里找到）：")
-    print("[首次配置] %s" % tok)
-    return tok
-
-
-def consume_setup_token(given: str) -> bool:
-    """校验 setup token，成功后立即删除（一次性）"""
-    ok = secrets.compare_digest((given or "").strip(), setup_token())
-    if ok:
-        try:
-            os.remove(SETUP_TOKEN_PATH)
-        except OSError:
-            pass
-    return ok
 
 
 def issue_admin_token() -> str:

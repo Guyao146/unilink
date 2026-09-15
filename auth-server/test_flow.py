@@ -500,10 +500,9 @@ class SetupAndAdminFlowTest(unittest.IsolatedAsyncioTestCase):
         d = self.tmp.name
         # 保存原路径，测完恢复，避免污染同进程的其它测试
         self._orig = (cfgmod.STATE_DIR, cfgmod.STATE_PATH,
-                      adminmod.SETUP_TOKEN_PATH, adminmod.ADMIN_HASH_PATH)
+                      adminmod.ADMIN_HASH_PATH)
         cfgmod.STATE_DIR = d
         cfgmod.STATE_PATH = os.path.join(d, "state.json")
-        adminmod.SETUP_TOKEN_PATH = os.path.join(d, "setup.token")
         adminmod.ADMIN_HASH_PATH = os.path.join(d, "admin.hash")
         self._env = {k: v for k, v in os.environ.items() if k.startswith("UNILINK_")}
         for k in self._env:
@@ -512,7 +511,7 @@ class SetupAndAdminFlowTest(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         self.tmp.cleanup()
         (cfgmod.STATE_DIR, cfgmod.STATE_PATH,
-         adminmod.SETUP_TOKEN_PATH, adminmod.ADMIN_HASH_PATH) = self._orig
+         adminmod.ADMIN_HASH_PATH) = self._orig
         os.environ.update(self._env)
 
     async def test_full_setup_and_admin(self):
@@ -523,10 +522,10 @@ class SetupAndAdminFlowTest(unittest.IsolatedAsyncioTestCase):
         client = TestClient(TestServer(a))
         await client.start_server()
         try:
-            # 1) /setup 可访问
+            # 1) /setup 可访问（无需令牌）
             r = await client.get("/setup")
             self.assertEqual(r.status, 200)
-            self.assertIn("setup_token", await r.text())
+            self.assertIn("base_url", await r.text())
 
             # 2) 业务端点被网关拦下：浏览器路径 302 到 /setup
             r = await client.get("/authorize", params={"client_id": "x"},
@@ -538,16 +537,15 @@ class SetupAndAdminFlowTest(unittest.IsolatedAsyncioTestCase):
             r = await client.get("/api/app/config")
             self.assertEqual(r.status, 503)
 
-            # 4) 错误的 setup token 被拒
+            # 4) 校验失败时不写入配置（缺 authentik_url）
             r = await client.post("/setup", data={
-                "setup_token": "wrong", "base_url": "https://qr.test",
-                "authentik_url": "https://auth.test", "client_secret": "s" * 48})
-            self.assertIn("无效", await r.text())
+                "base_url": "https://qr.test", "client_secret": "s" * 48})
+            self.assertEqual(r.status, 200)
+            self.assertIn("authentik_url", await r.text())
+            self.assertIsNone(cfgmod.load_or_none())
 
             # 5) 正确提交 → 进入运行模式并签发 admin token
-            tok = adminmod.setup_token()
             r = await client.post("/setup", data={
-                "setup_token": tok,
                 "base_url": "https://qr.test/",
                 "authentik_url": "https://auth.test",
                 "client_id": "unilink-qr",
@@ -559,7 +557,6 @@ class SetupAndAdminFlowTest(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(m, "页面上找不到 admin token")
             admin_token = m.group(1)
             self.assertFalse(a["setup_mode"])              # 已切换到运行模式
-            self.assertFalse(os.path.exists(adminmod.SETUP_TOKEN_PATH))  # 一次性
             r = await client.get("/setup", allow_redirects=False)
             self.assertEqual(r.status, 404)                # 配置完成后 /setup 关闭
 

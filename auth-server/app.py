@@ -495,9 +495,6 @@ async def setup_save(request):
         raise web.HTTPNotFound()
     form = await request.post()
 
-    if not adminmod.consume_setup_token(form.get("setup_token", "")):
-        return _html(render_setup_page(form, "setup token 无效或已被使用过"))
-
     data, err = adminmod.validate_setup_form(form)
     if err:
         return _html(render_setup_page(form, err))
@@ -614,9 +611,7 @@ def main():
         host = os.environ.get("UNILINK_HOST", "0.0.0.0")
         port = int(os.environ.get("UNILINK_PORT", "8790"))
         log.warning("检测到必填配置缺失，进入「首次配置模式」。")
-        log.warning("请在浏览器打开反代后的 https 地址的 /setup，"
-                    "用日志中的 setup token 完成配置。")
-        adminmod.setup_token()          # 生成并打印一次性令牌
+        log.warning("请在浏览器打开反代后的 https 地址的 /setup 完成配置。")
         web.run_app(build_app(None), host=host, port=port, print=None)
         return
 

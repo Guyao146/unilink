@@ -253,14 +253,8 @@ def render_setup_page(values: dict = None, error: str = None) -> str:
     body = ["<h1 style=\"text-align:center\">首次配置 UniLink 扫码登录服务</h1>",
             '<p class="sub" style="text-align:center;margin-bottom:20px">'
             "服务检测到尚未配置，请填写下面的必填项。</p>"]
-    body.append('<div class="note">首次配置需要一次性令牌，已打印在容器日志里'
-                "（<code>docker compose logs</code> 搜「首次配置」），"
-                "也可在服务器上的 <code>data/setup.token</code> 文件里找到。</div>")
     if error:
         body.append('<p class="msg">%s</p>' % _esc(error))
-    body.append('<div class="grp"><b>一次性令牌</b></div>')
-    body.append(_field("setup_token", "setup token（首次配置用，用完即作废）",
-                       "", placeholder="从日志或 data/setup.token 复制", required=True))
     body.append(_config_form(values, "/setup", "保存并完成配置"))
     return _page("首次配置", "".join(body))
 

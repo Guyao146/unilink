@@ -2,51 +2,51 @@
 <!--
   UniLink 设计系统 · 色板（深色）
   ===============================
-同名覆盖。深色下玻璃的表达方式相反：
+同名覆盖。
 
-    · 浅色 = 白玻璃叠在亮底上；
-    · 深色 = 低透明白浮在深夜蓝底上。
+   石墨中性灰方向（iOS 标准灰系）
+   ──────────────────────────────
+   环境层去掉蓝色相，转为纯中性灰（#1C1C1E / #161618 / #0F0F11），
+   与 iOS systemBackground 对齐。光斑降为近乎环境光的微弱灰白——
+   灰底上只保留空间层次，不冒出突兀的彩色。
 
-   这一版把深色背景从“近黑”提到“深夜蓝”
-   （#111C33 / #16233D / #0D1525），玻璃填充提到 20-30% 白、顶缘高光提到 35% 白。
-   理由：背景越接近纯黑，半透明白越无处可折射，
-   卡片就糊成一片灰；留出中间明度梯度，轮廓和光斑色温变化才看得出。
-   光斑同步提到 30% 透明度，“感知环境色”在夜间依然存在，只是更内敛。
-
-   强调色用 iOS 深色系统色（#0A84FF / #30D158 / #FF9F0A / #FF453A），
-   在暗底上有足够对比度。
+   玻璃 = 白透明叠在灰底上，呈现为更亮的灰；
+   文字用 iOS label 体系，ink_tertiary 对齐 systemGray。
+   强调色沿用 iOS 深色系统色（#0A84FF / #30D158 / #FF9F0A / #FF453A），
+   与灰底是经典搭配，不需要用户重新建立心智。
 -->
 <resources>
 
-    <!-- ── 环境层：深夜蓝，光斑更内敛 ── -->
-    <color name="amb_top">#111C33</color>
-    <color name="amb_mid">#16233D</color>
-    <color name="amb_bottom">#0D1525</color>
+    <!-- ── 环境层：中性石墨灰，无色相（干净百搭的基调）── -->
+    <color name="amb_top">#1C1C1E</color>
+    <color name="amb_mid">#161618</color>
+    <color name="amb_bottom">#0F0F11</color>
 
-    <color name="amb_glow_cyan">#4D12A5E8</color>
-    <color name="amb_glow_cyan_out">#0012A5E8</color>
-    <color name="amb_glow_violet">#4D8F7BFF</color>
-    <color name="amb_glow_violet_out">#008F7BFF</color>
+    <!-- 光斑降为近乎环境光的微白：灰底上只留空间层次，不冒突兀彩色 -->
+    <color name="amb_glow_cyan">#14666C77</color>
+    <color name="amb_glow_cyan_out">#00666C77</color>
+    <color name="amb_glow_violet">#108E8E98</color>
+    <color name="amb_glow_violet_out">#008E8E98</color>
 
-    <!-- ── 玻璃材质：低透明白 + 顶缘高光 ── -->
-    <color name="glass_fill_top">#33FFFFFF</color>
-    <color name="glass_fill_bottom">#1EFFFFFF</color>
-    <color name="glass_edge_light">#5AFFFFFF</color>
-    <color name="glass_edge_dark">#2B000000</color>
+    <!-- ── 玻璃材质：白透明叠在灰底上 = 更亮的灰，轮廓明确 ── -->
+    <color name="glass_fill_top">#2EFFFFFF</color>
+    <color name="glass_fill_bottom">#1BFFFFFF</color>
+    <color name="glass_edge_light">#4DFFFFFF</color>
+    <color name="glass_edge_dark">#20000000</color>
 
-    <color name="row_fill">#2BFFFFFF</color>
-    <color name="row_edge">#38FFFFFF</color>
+    <color name="row_fill">#26FFFFFF</color>
+    <color name="row_edge">#33FFFFFF</color>
 
-    <color name="field_fill">#30000000</color>
-    <color name="field_edge">#3DFFFFFF</color>
+    <color name="field_fill">#20000000</color>
+    <color name="field_edge">#33FFFFFF</color>
 
-    <color name="glass_press">#2EFFFFFF</color>
-    <color name="glass_ripple">#404C8DFF</color>
+    <color name="glass_press">#2AFFFFFF</color>
+    <color name="glass_ripple">#338E8E93</color>
 
-    <!-- ── 文字 ── -->
-    <color name="ink_primary">#F4F8FD</color>
-    <color name="ink_secondary">#B9C5DA</color>
-    <color name="ink_tertiary">#8B99B1</color>
+    <!-- ── 文字：iOS label 体系（systemGray 对齐）── -->
+    <color name="ink_primary">#F2F2F7</color>
+    <color name="ink_secondary">#C7C7CC</color>
+    <color name="ink_tertiary">#8E8E93</color>
     <color name="ink_on_accent">#FFFFFF</color>
 
     <!-- ── 强调色：iOS 深色系统色 ── -->
@@ -67,10 +67,10 @@
     <color name="switch_on">#30D158</color>
     <color name="switch_off">#59787880</color>
 
-    <!-- 悬浮 Dock：深色下压得更实，稳住底部 -->
-    <color name="dock_fill_top">#F21B2540</color>
-    <color name="dock_fill_bottom">#D9141C31</color>
+    <!-- 悬浮 Dock：更实的灰，压住滚动内容 -->
+    <color name="dock_fill_top">#F2262628</color>
+    <color name="dock_fill_bottom">#D91C1C1E</color>
 
-    <color name="log_bg">#F20F1726</color>
-    <color name="log_text">#8FE3B5</color>
+    <color name="log_bg">#F21C1C1E</color>
+    <color name="log_text">#9BE8C1</color>
 </resources>

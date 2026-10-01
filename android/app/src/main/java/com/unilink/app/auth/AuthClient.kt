@@ -22,6 +22,24 @@ class AuthClient(private val ctx: Context) {
 
     class ApiError(message: String, val status: Int = 0) : IOException(message)
 
+    /**
+     * 全 App 共享一个 OkHttpClient。
+     *
+     * 每个实例各建一套 Dispatcher 线程池 + ConnectionPool 守护线程，
+     * 而扫码流程会反复 new AuthClient（onCreate、onActivityResult、
+     * 登录各一次），线程数因此一路爬升，在线程面板里堆出一排
+     * “OkHttp Dispatcher / OkHttp ConnectionPool”。共用一套后只有一份。
+     *
+     * 超时与扫码短请求相匹配；okhttp 内部各组件都是线程安全的，
+     * 单例在并发请求下是官方推荐用法。
+     */
+    companion object {
+        private val http: OkHttpClient = OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .build()
+    }
+
     /** authentik 端点集合 */
     data class Endpoints(
         val authorizeUrl: String,
@@ -31,11 +49,6 @@ class AuthClient(private val ctx: Context) {
         val redirectUri: String,
         val scopes: String
     )
-
-    private val http = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .build()
 
     private val JSON = "application/json; charset=utf-8".toMediaType()
 

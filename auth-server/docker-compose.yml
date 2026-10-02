@@ -14,6 +14,8 @@ services:
     image: unilink-auth:latest
     container_name: unilink-auth
     restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
 
     # 只监听环回地址，杜绝绕过反代直连
     ports:

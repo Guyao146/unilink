@@ -224,6 +224,11 @@ def _purge_locked():
         _sessions.pop(sid, None)
 
 
+def prune_sessions() -> None:
+    with _lock:
+        _purge_locked()
+
+
 def create_session() -> tuple:
     """登录成功时调用，返回 (sid, csrf)。sid 放 HttpOnly cookie，csrf 双重提交防 CSRF"""
     sid = secrets.token_urlsafe(32)

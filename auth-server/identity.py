@@ -12,6 +12,8 @@ authentik 身份校验
 
 代价是每次扫码确认多一次到 authentik 的内网请求，可忽略。
 """
+import asyncio
+
 import aiohttp
 
 
@@ -30,7 +32,7 @@ async def fetch_identity(session: aiohttp.ClientSession,
         async with session.get(
                 userinfo_url,
                 headers={"Authorization": "Bearer " + access_token},
-                timeout=aiohttp.ClientTimeout(total=10)) as r:
+                timeout=aiohttp.ClientTimeout(total=10, connect=3, sock_read=5)) as r:
             if r.status == 401:
                 raise IdentityError("authentik 令牌已失效，请在手机上重新登录")
             if r.status != 200:
@@ -38,6 +40,8 @@ async def fetch_identity(session: aiohttp.ClientSession,
                 raise IdentityError("authentik userinfo 返回 %d: %s" % (r.status, body),
                                     status=502)
             info = await r.json()
+    except asyncio.TimeoutError:
+        raise IdentityError("authentik 响应超时，请重试", status=504)
     except aiohttp.ClientError as e:
         raise IdentityError("无法连接 authentik: %s" % e, status=502)
 

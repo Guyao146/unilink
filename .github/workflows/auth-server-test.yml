@@ -11,6 +11,7 @@ on:
     paths:
       - 'auth-server/**'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   test:
@@ -25,6 +26,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Install dependencies
         working-directory: auth-server
         run: |
@@ -34,8 +39,8 @@ jobs:
 
       - name: Lint
         working-directory: auth-server
-        run: python -m pyflakes app.py admin.py config.py store.py identity.py jwtutil.py qr.py pages.py test_flow.py
+        run: python -m pyflakes *.py
 
       - name: Run tests
         working-directory: auth-server
-        run: python -m unittest test_flow -v
+        run: python -m unittest discover -p 'test_*.py' -v

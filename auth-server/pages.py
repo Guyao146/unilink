@@ -64,15 +64,21 @@ _JS = """
      elHint=document.getElementById('hint'),
      elQr=document.getElementById('qr'),
      elBtn=document.getElementById('again');
- var left=TTL, done=false, timer=null, tick=null;
+ var left=TTL, deadline=Date.now()+TTL*1000, done=false, timer=null, tick=null;
+ var flight=null, requestTimer=null;
 
  function say(html,cls){elState.className='state '+(cls||'');elState.innerHTML=html;}
  function hint(t){elHint.textContent=t||'';}
- function stop(){done=true;if(timer)clearInterval(timer);if(tick)clearInterval(tick);}
+ function stop(){
+   done=true;
+   clearTimeout(timer);clearInterval(tick);clearTimeout(requestTimer);
+   timer=tick=requestTimer=null;
+   if(flight)flight.abort();
+ }
 
  tick=setInterval(function(){
    if(done)return;
-   left--;
+   left=Math.max(0,Math.ceil((deadline-Date.now())/1000));
    if(left<=0){stop();expire();return;}
    if(left<=30)hint('二维码将在 '+left+' 秒后过期');
  },1000);
@@ -93,13 +99,19 @@ _JS = """
  }
 
  function poll(){
-   if(done)return;
+   if(done||flight)return;
+   var controller=new AbortController();
+   flight=controller;
+   requestTimer=setTimeout(function(){controller.abort()},8000);
    fetch(BASE+'/api/session/'+encodeURIComponent(TK)+'?k='+encodeURIComponent(KEY),
-         {cache:'no-store'})
-    .then(function(r){return r.json()})
+         {cache:'no-store',signal:controller.signal})
+    .then(function(r){if(!r.ok)throw new Error('poll failed');return r.json()})
     .then(function(d){
       if(done)return;
-      if(d.expires_in!=null&&d.expires_in<left)left=d.expires_in;
+      if(d.expires_in!=null){
+        deadline=Math.min(deadline,Date.now()+d.expires_in*1000);
+        left=Math.max(0,Math.ceil((deadline-Date.now())/1000));
+      }
       switch(d.state){
         case 'pending':
           say('<span class="dot"></span>请用 UniLink 手机 App 扫描二维码');break;
@@ -113,12 +125,17 @@ _JS = """
         default:
           stop();expire();
       }
-    }).catch(function(){/* 网络抖动，下一轮重试 */});
+    }).catch(function(){/* 网络抖动/超时，在请求结束后重试 */})
+    .finally(function(){
+      clearTimeout(requestTimer);requestTimer=null;flight=null;
+      if(!done)timer=setTimeout(poll,1500);
+    });
  }
 
- elBtn.addEventListener('click',function(){location.reload()});
+ window.addEventListener('pagehide',stop);
+ window.addEventListener('pageshow',function(e){if(e.persisted)location.reload()});
+ elBtn.addEventListener('click',function(){stop();location.reload()});
  poll();
- timer=setInterval(poll,1500);
 })();
 """
 

@@ -16,6 +16,8 @@ services:
     image: ghcr.io/guyao146/unilink-auth:latest
     container_name: unilink-auth
     restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
 
     ports:
       - "127.0.0.1:${UNILINK_PORT:-8790}:${UNILINK_PORT:-8790}"

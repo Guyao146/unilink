@@ -114,7 +114,7 @@ class Store:
                 drop = max(1, self.max_sessions // 10)
                 for t in sorted(self._by_ticket,
                                 key=lambda k2: self._by_ticket[k2].created)[:drop]:
-                    self._by_ticket.pop(t, None)
+                    self._drop_locked(t)
             self._by_ticket[s.ticket] = s
         return s
 
@@ -124,7 +124,7 @@ class Store:
             if s is None:
                 return None
             if not s.alive:
-                self._by_ticket.pop(s.ticket, None)
+                self._drop_locked(s.ticket)
                 return None
             return s
 
@@ -171,8 +171,10 @@ class Store:
                 return None, "授权码无效或已被使用"
             if s.state != APPROVED:
                 return None, "授权码状态异常（%s）" % s.state
-            if time.time() > s.code_expires:
+            if not s.alive or time.time() >= s.code_expires:
                 s.state = CONSUMED
+                s.code = ""
+                s.identity = None
                 return None, "授权码已过期"
             s.state = CONSUMED
             return s, None
@@ -199,6 +201,22 @@ class Store:
 
     # ---------- 清理 ----------
 
+    def _drop_locked(self, ticket):
+        s = self._by_ticket.pop(ticket, None)
+        if s is not None and s.code:
+            self._by_code.pop(s.code, None)
+
+    def prune(self):
+        """定时调用，即使没有新登录也回收过期记录。"""
+        with self._lock:
+            self._gc_locked(force=True)
+
+    def clear(self):
+        with self._lock:
+            self._by_ticket.clear()
+            self._by_code.clear()
+            self._tokens.clear()
+
     def _gc_locked(self, force: bool = False):
         now = time.time()
         if not force and now - self._last_gc < 20:
@@ -206,10 +224,13 @@ class Store:
         self._last_gc = now
         for t, s in list(self._by_ticket.items()):
             if not s.alive:
-                self._by_ticket.pop(t, None)
+                self._drop_locked(t)
         for c, s in list(self._by_code.items()):
-            if now > s.code_expires:
+            if now >= s.code_expires:
                 self._by_code.pop(c, None)
+                s.state = CONSUMED
+                s.code = ""
+                s.identity = None
         for k, rec in list(self._tokens.items()):
             if now > rec["exp"]:
                 self._tokens.pop(k, None)

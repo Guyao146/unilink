@@ -35,6 +35,9 @@ class ConfigPriorityTest(unittest.TestCase):
 
     def tearDown(self):
         cfgmod.STATE_DIR, cfgmod.STATE_PATH = self._orig
+        for key in list(os.environ):
+            if key.startswith("UNILINK_"):
+                del os.environ[key]
         os.environ.update(self._env)
         self.tmp.cleanup()
 

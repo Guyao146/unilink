@@ -13,7 +13,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    uses: ./.github/workflows/auth-server-test.yml
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -47,6 +51,33 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
             type=sha,format=short
+
+      - name: Container lifecycle smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build -t unilink-auth:smoke ./auth-server
+          trap 'docker logs unilink-auth-smoke; docker rm -f unilink-auth-smoke' EXIT
+          # 验证非默认端口健康检查与首次配置模式的进程级资源初始化。
+          docker run -d --name unilink-auth-smoke --init \
+            --health-interval=1s --health-start-period=1s \
+            -e UNILINK_PORT=8791 -e UNILINK_GC_INTERVAL=1 unilink-auth:smoke
+          healthy=false
+          for i in $(seq 1 30); do
+            if [ "$(docker inspect -f '{{.State.Health.Status}}' unilink-auth-smoke)" = healthy ]; then
+              healthy=true
+              break
+            fi
+            sleep 1
+          done
+          test "$healthy" = true
+          start=$SECONDS
+          docker stop --time 15 unilink-auth-smoke
+          test $((SECONDS - start)) -lt 15
+          test "$(docker inspect -f '{{.State.ExitCode}}' unilink-auth-smoke)" = 0
+          if docker logs unilink-auth-smoke 2>&1 | grep -Ei 'Unclosed|Task was destroyed|Traceback'; then
+            exit 1
+          fi
 
       - name: Build and push
         uses: docker/build-push-action@v6

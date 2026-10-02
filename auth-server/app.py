@@ -31,7 +31,6 @@ import time
 from html import escape as _esc
 from urllib.parse import urlencode
 
-import aiohttp
 from aiohttp import web
 
 import config
@@ -41,6 +40,7 @@ from jwtutil import Signer
 from pages import (render_admin_login_page, render_admin_page, render_error_page,
                    render_scan_page, render_setup_page)
 from qr import qr_svg
+from runtime import Runtime
 import admin as adminmod
 
 log = logging.getLogger("unilink.auth")
@@ -142,6 +142,10 @@ def _reload_config(app) -> bool:
     cfg = config.load_or_none()
     if cfg is None:
         return False
+    app["runtime"].cancel_pending()
+    previous = app.get("store")
+    if previous is not None:
+        previous.clear()
     app["cfg"] = cfg
     app["store"] = st.Store(cfg.login_ttl, cfg.code_ttl, cfg.token_ttl,
                             cfg.max_sessions)
@@ -432,6 +436,14 @@ async def scan_approve(request):
         return _json({"error": "already_used",
                       "error_description": "该二维码已被确认过"}, 409)
 
+    if s.state == st.DENIED:
+        return _json({"error": "bad_state", "error_description": "该登录已被拒绝"}, 409)
+    async with request.app["runtime"].approval(s.ticket):
+        return await _approve_identity(request, cfg, s, body)
+
+
+async def _approve_identity(request, cfg, s, body):
+    store = request.app["store"]
     try:
         info = await ident.fetch_identity(
             request.app["http"], cfg.ak_userinfo, body.get("access_token", ""))
@@ -446,7 +458,8 @@ async def scan_approve(request):
         return _json({"error": "forbidden", "error_description": why}, 403)
 
     claims = ident.build_claims(info)
-    if request.app["store"].approve(s.ticket, claims) is None:
+    if (request.app["store"] is not store or
+            store.approve(s.ticket, claims) is None):
         return _json({"error": "bad_state",
                       "error_description": "会话状态已变化，请重新扫码"}, 409)
 
@@ -462,7 +475,8 @@ async def scan_approve(request):
 async def scan_deny(request):
     body = await request.json()
     s = await _load_session(request, body.get("ticket", ""))
-    request.app["store"].deny(s.ticket)
+    if request.app["store"].deny(s.ticket) is not None:
+        request.app["runtime"].cancel(s.ticket)
     log.info("用户拒绝了扫码登录 ticket=%s…", s.ticket[:8])
     return _json({"ok": True})
 
@@ -577,18 +591,16 @@ async def admin_logout(request):
 # 启动
 # ======================================================================
 
-async def _on_startup(app):
-    app["http"] = aiohttp.ClientSession()
-
-
-async def _on_cleanup(app):
-    await app["http"].close()
+async def _on_shutdown(app):
+    await app["runtime"].stop()
 
 
 def build_app(cfg=None, key_path: str = None) -> web.Application:
     """cfg 为 None 时进入首次配置模式：只有 /setup 与 /healthz 可用，业务端点被网关拦下"""
     setup_mode = cfg is None
-    app = web.Application(middlewares=[_setup_gate])
+    app = web.Application(middlewares=[_setup_gate], handler_args={
+        "handler_cancellation": True, "keepalive_timeout": 30})
+    runtime = app["runtime"] = Runtime()
     app["cfg"] = cfg
     app["setup_mode"] = setup_mode
     if not setup_mode:
@@ -596,8 +608,8 @@ def build_app(cfg=None, key_path: str = None) -> web.Application:
                                 cfg.max_sessions)
         app["signer"] = Signer(key_path) if key_path else Signer()
     app.add_routes(ROUTES)
-    app.on_startup.append(_on_startup)
-    app.on_cleanup.append(_on_cleanup)
+    app.cleanup_ctx.append(runtime.context)
+    app.on_shutdown.append(_on_shutdown)
     return app
 
 
@@ -612,7 +624,8 @@ def main():
         port = int(os.environ.get("UNILINK_PORT", "8790"))
         log.warning("检测到必填配置缺失，进入「首次配置模式」。")
         log.warning("请在浏览器打开反代后的 https 地址的 /setup 完成配置。")
-        web.run_app(build_app(None), host=host, port=port, print=None)
+        web.run_app(build_app(None), host=host, port=port, print=None,
+                    shutdown_timeout=5)
         return
 
     app = build_app(cfg)
@@ -623,7 +636,7 @@ def main():
     log.info("  签名 kid          : %s", app["signer"].kid)
     log.info("  发现文档          : %s/.well-known/openid-configuration", cfg.base_url)
     log.info("  管理面板          : %s/admin", cfg.base_url)
-    web.run_app(app, host=cfg.host, port=cfg.port, print=None)
+    web.run_app(app, host=cfg.host, port=cfg.port, print=None, shutdown_timeout=5)
 
 
 if __name__ == "__main__":

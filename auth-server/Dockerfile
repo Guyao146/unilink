@@ -27,6 +27,8 @@ ENV UNILINK_HOST=0.0.0.0 \
     UNILINK_PORT=8790
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8790/healthz',timeout=4).status==200 else 1)"
+    CMD python -c "import os,urllib.request,sys; p=os.environ.get('UNILINK_PORT') or '8790'; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+p+'/healthz',timeout=4).status==200 else 1)"
+
+STOPSIGNAL SIGTERM
 
 CMD ["python", "app.py"]

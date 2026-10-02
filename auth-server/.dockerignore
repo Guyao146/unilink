@@ -1,0 +1,11 @@
+# 仅运行时源码进入镜像构建上下文；私钥和配置通过卷 / 环境传入。
+.env
+.env.*
+!.env.example
+keys/
+data/
+config.json
+__pycache__/
+*.pyc
+test_*.py
+test_poll.js

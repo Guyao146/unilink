@@ -143,6 +143,36 @@ docker run --rm -v unilink-auth_unilink-keys:/k \
     tar czf /b/unilink-backup.tar.gz -C /k . -C /d .
 ```
 
+## 资源回收与并发限制
+
+扫码服务使用 aiohttp 单进程事件循环，锁对象不会创建工作线程。不能通过
+“每次扫码后杀线程”来优化；系统 DNS 解析可能短暂使用 Python 的共享执行器。
+
+- 每个二维码同时只允许一次身份校验；重复确认返回 409。
+- 全服务默认最多 16 个进行中的身份校验，超限立即返回 503（`Retry-After: 2`），不无限排队。
+- 上游请求总超时 10 秒、连接等待 3 秒、读取超时 5 秒；共享连接池空闲连接由 15 秒超时策略回收。
+- 客户端断开、手机拒绝或配置热更新时取消相应校验。反代必须向后端传递客户端断开；
+  若反代继续保持请求，上游超时仍兜底，不能保证立即感知用户离开。
+- 浏览器轮询完成后再等待 1.5 秒发下一次，8 秒超时；关闭/离开页面时中止请求和计时器。
+- 每 20 秒清理过期扫码会话、授权码、访问令牌及管理员会话；没有新登录也会清理。
+- 容器 SIGTERM 时取消正在校验的请求、停止清理任务并关闭 HTTP 连接池。Compose 使用
+  `init: true` 和 `stop_grace_period: 15s`，给资源释放留出时间。
+
+可在 `.env` 中设置 `UNILINK_HTTP_LIMIT=16`、`UNILINK_GC_INTERVAL=20`。
+这两个是**进程资源参数**，须 `docker compose up -d --force-recreate` 后生效，
+不由网页后台热更新。更新镜像时也请把 Compose 的 `init`、`stop_grace_period` 同步到本地。
+
+检查线程与资源（请先进入实际部署目录）：
+
+```bash
+docker stats --no-stream unilink-auth
+docker top unilink-auth -eLf
+docker exec unilink-auth python -c "import pathlib; print([(p.name, len(list((p/'task').iterdir()))) for p in pathlib.Path('/proc').iterdir() if p.name.isdigit()])"
+```
+
+`docker stats` 的 PIDS 包含进程和线程；健康检查也会短暂启动 Python 子进程。
+少量稳定的 DNS/运行时线程不等于泄漏，应观察重复扫码后是否持续上涨及 CPU/内存是否回落。
+
 ## 与 authentik 同网络（可选）
 
 如果 authentik 也在 Docker 里，可以让两者走容器名直连，省掉出公网绕一圈：

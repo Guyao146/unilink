@@ -7,6 +7,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -18,25 +19,26 @@ import java.util.concurrent.TimeUnit
  *
  * 端点来自扫码服务的 /api/app/config，避免在手机上手输一堆 URL。
  */
-class AuthClient(private val ctx: Context) {
+class AuthClient(ctx: Context) : Closeable {
+    private val ctx = ctx.applicationContext
+    private val calls = AuthCalls(http)
+
+    /** 仅取消本实例的请求，不关闭其他页面共用的客户端/连接池。 */
+    override fun close() = calls.close()
 
     class ApiError(message: String, val status: Int = 0) : IOException(message)
 
     /**
-     * 全 App 共享一个 OkHttpClient。
-     *
-     * 每个实例各建一套 Dispatcher 线程池 + ConnectionPool 守护线程，
-     * 而扫码流程会反复 new AuthClient（onCreate、onActivityResult、
-     * 登录各一次），线程数因此一路爬升，在线程面板里堆出一排
-     * “OkHttp Dispatcher / OkHttp ConnectionPool”。共用一套后只有一份。
-     *
-     * 超时与扫码短请求相匹配；okhttp 内部各组件都是线程安全的，
-     * 单例在并发请求下是官方推荐用法。
+     * 全 App 复用 HTTP 连接。同步 execute 在调用线程运行，不使用 Dispatcher
+     * 的异步工作线程池；OkHttp 4 的维护任务由内部 TaskRunner 管理。
+     * 请求取消交给各实例的 AuthCalls，不能对共享 Dispatcher 调 cancelAll。
      */
     companion object {
         private val http: OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
+            .callTimeout(30, TimeUnit.SECONDS)
+            .connectionPool(okhttp3.ConnectionPool(2, 30, TimeUnit.SECONDS))
             .build()
     }
 
@@ -57,31 +59,27 @@ class AuthClient(private val ctx: Context) {
     private fun getJson(url: String, bearer: String? = null): JSONObject {
         val b = Request.Builder().url(url).get()
         if (bearer != null) b.header("Authorization", "Bearer $bearer")
-        http.newCall(b.build()).execute().use { r ->
-            val body = r.body?.string().orEmpty()
-            if (!r.isSuccessful) throw ApiError(describe(url, r.code, body), r.code)
-            return parseJson(url, body)
-        }
+        return readJson(b.build())
     }
 
     private fun postForm(url: String, form: Map<String, String>): JSONObject {
         val fb = FormBody.Builder()
         form.forEach { (k, v) -> fb.add(k, v) }
-        http.newCall(Request.Builder().url(url).post(fb.build()).build()).execute().use { r ->
-            val body = r.body?.string().orEmpty()
-            if (!r.isSuccessful) throw ApiError(describe(url, r.code, body), r.code)
-            return parseJson(url, body)
-        }
+        return readJson(Request.Builder().url(url).post(fb.build()).build())
     }
 
     private fun postJson(url: String, payload: JSONObject): JSONObject {
         val rb = payload.toString().toRequestBody(JSON)
-        http.newCall(Request.Builder().url(url).post(rb).build()).execute().use { r ->
+        return readJson(Request.Builder().url(url).post(rb).build(), allowEmpty = true)
+    }
+
+    private fun readJson(request: Request, allowEmpty: Boolean = false): JSONObject =
+        calls.execute(request) { r ->
+            val url = request.url.toString()
             val body = r.body?.string().orEmpty()
             if (!r.isSuccessful) throw ApiError(describe(url, r.code, body), r.code)
-            return if (body.isBlank()) JSONObject() else parseJson(url, body)
+            if (allowEmpty && body.isBlank()) JSONObject() else parseJson(url, body)
         }
-    }
 
     /**
      * 解析 JSON。HTTP 200 但内容不是 JSON 的情况很常见 ——
@@ -174,8 +172,10 @@ class AuthClient(private val ctx: Context) {
             "client_id" to ep.clientId,
             "code_verifier" to verifier
         ))
+        calls.ensureActive()
         AuthSession.saveTokens(ctx, tok)
         val info = getJson(ep.userinfoUrl, tok.optString("access_token"))
+        calls.ensureActive()
         AuthSession.saveIdentity(ctx, info)
         return info
     }
@@ -189,9 +189,11 @@ class AuthClient(private val ctx: Context) {
                 "refresh_token" to rt,
                 "client_id" to ep.clientId
             ))
+            calls.ensureActive()
             AuthSession.saveTokens(ctx, tok)
             true
         } catch (e: ApiError) {
+            calls.ensureActive()
             // 400/401 表示 refresh_token 已失效（被吊销或过期）→ 清理本地会话
             if (e.status == 400 || e.status == 401) AuthSession.logout(ctx)
             false
@@ -200,6 +202,7 @@ class AuthClient(private val ctx: Context) {
 
     /** 取一个当前可用的 access_token，必要时自动刷新 */
     fun validAccessToken(ep: Endpoints): String? {
+        calls.ensureActive()
         if (!AuthSession.expired(ctx)) return AuthSession.accessToken(ctx)
         if (!refresh(ep)) return null
         return AuthSession.accessToken(ctx)

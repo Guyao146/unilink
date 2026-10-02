@@ -1,6 +1,5 @@
 package com.unilink.app.auth
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -29,9 +28,11 @@ import com.unilink.app.R
  * 路径（该类在 4.3.0 中仍然可用，仅被标记 deprecated）。
  */
 @Suppress("DEPRECATION")
-class ScanLoginActivity : Activity() {
+class ScanLoginActivity : AuthTaskActivity() {
 
     private var endpoints: AuthClient.Endpoints? = null
+    private var awaitingScanner = false
+    private var dialog: AlertDialog? = null
 
     companion object {
         fun start(ctx: Context) {
@@ -43,8 +44,15 @@ class ScanLoginActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 配置变更导致重建时不要再开一次相机（否则会叠两层扫码界面）
-        if (savedInstanceState != null) return
+        // 重建时只等待已经打开的相机，不重复提交被取消的预览/授权请求。
+        if (savedInstanceState != null) {
+            awaitingScanner = savedInstanceState.getBoolean("awaiting_scanner")
+            if (!awaitingScanner) {
+                toast("扫码流程已中断，请重新扫码")
+                finish()
+            }
+            return
+        }
 
         AuthSession.load(this)
         if (!AuthSession.loggedIn) {
@@ -61,18 +69,19 @@ class ScanLoginActivity : Activity() {
         }
 
         // 端点信息用于必要时刷新令牌；取不到也继续（可能只是暂时离线）
-        Thread {
-            endpoints = try {
-                AuthClient(this).fetchEndpoints(server)
-            } catch (t: Throwable) {
-                null
-            }
-            runOnUiThread { launchScanner() }
-        }.start()
+        request(
+            work = { client.fetchEndpoints(server) },
+            success = {
+                endpoints = it
+                launchScanner()
+            },
+            failure = { launchScanner() }
+        )
     }
 
     private fun launchScanner() {
-        if (isFinishing) return
+        if (isFinishing || isDestroyed) return
+        awaitingScanner = true
         IntentIntegrator(this).apply {
             setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
             setPrompt(getString(R.string.scan_prompt))
@@ -89,6 +98,8 @@ class ScanLoginActivity : Activity() {
             finish()
             return
         }
+        if (isFinishing || isDestroyed) return
+        awaitingScanner = false
         val res = IntentIntegrator.parseActivityResult(resultCode, data)
         val text = res?.contents
         if (text.isNullOrBlank()) {      // 用户按返回键取消
@@ -96,7 +107,6 @@ class ScanLoginActivity : Activity() {
             return
         }
 
-        val client = AuthClient(this)
         val ticket = client.parseQr(text)
         if (ticket == null) {
             Hub.log("⚠ 扫到的二维码不是 UniLink 登录码（或地址不是 https）")
@@ -121,9 +131,20 @@ class ScanLoginActivity : Activity() {
         preview(client, ticket)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("awaiting_scanner", awaitingScanner)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dialog?.dismiss()
+        dialog = null
+    }
+
     private fun alert(title: String, msg: String) {
-        if (isFinishing) return
-        AlertDialog.Builder(this)
+        if (isFinishing || isDestroyed) return
+        dialog = AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(msg)
             .setPositiveButton("知道了") { _, _ -> finish() }
@@ -135,25 +156,23 @@ class ScanLoginActivity : Activity() {
 
     private fun preview(client: AuthClient, ticket: QrTicket.Ticket) {
         val device = Build.MODEL ?: "Android"
-        Thread {
-            try {
-                val info = client.preview(ticket, device)
-                val app = info.optString("app").ifBlank { "未知应用" }
-                runOnUiThread { confirm(client, ticket, app) }
-            } catch (t: Throwable) {
+        request(
+            work = { client.preview(ticket, device) },
+            success = { info ->
+                confirm(client, ticket, info.optString("app").ifBlank { "未知应用" })
+            },
+            failure = { t ->
                 Hub.log("⚠ 二维码校验失败：${t.message}")
-                runOnUiThread {
-                    toast("二维码已失效：${t.message}")
-                    finish()
-                }
+                toast("二维码已失效：${t.message}")
+                finish()
             }
-        }.start()
+        )
     }
 
     private fun confirm(client: AuthClient, ticket: QrTicket.Ticket, app: String) {
-        if (isFinishing) return
+        if (isFinishing || isDestroyed) return
         val who = AuthSession.displayName(this).ifBlank { "当前账号" }
-        AlertDialog.Builder(this)
+        dialog = AlertDialog.Builder(this)
             .setTitle("确认登录")
             .setMessage("将以【$who】的身份登录：\n\n$app\n\n" +
                     "如果这不是你本人在电脑上发起的登录，请点「不是我」。")
@@ -166,48 +185,46 @@ class ScanLoginActivity : Activity() {
     // ---------------- 确认 / 拒绝 ----------------
 
     private fun approve(client: AuthClient, ticket: QrTicket.Ticket) {
-        Thread {
-            try {
-                // 本地令牌可能已过期，这里取一个保证可用的
-                val ep = endpoints
+        val cachedEndpoints = endpoints
+        request(
+            work = {
+                // 页面在相机前台时可能重建；需要续期时重新发现端点。
+                val ep = cachedEndpoints ?: if (AuthSession.expired(applicationContext))
+                    client.fetchEndpoints(ticket.server) else null
                 val token = if (ep != null) client.validAccessToken(ep)
-                            else AuthSession.accessToken(this)
-                if (token.isNullOrBlank()) {
-                    runOnUiThread {
-                        toast("登录状态已过期，请重新登录 authentik")
-                        finish()
-                    }
-                    return@Thread
-                }
-                val r = client.approve(ticket, token)
-                Hub.log("✅ 已确认扫码登录：${r.optString("app").ifBlank { "该应用" }}")
-                runOnUiThread {
+                            else AuthSession.accessToken(applicationContext)
+                if (token.isNullOrBlank()) null else client.approve(ticket, token)
+            },
+            success = { r ->
+                if (r == null) {
+                    toast("登录状态已过期，请重新登录 authentik")
+                } else {
+                    Hub.log("✅ 已确认扫码登录：${r.optString("app").ifBlank { "该应用" }}")
                     toast("已确认，电脑上即将完成登录")
-                    finish()
                 }
-            } catch (t: Throwable) {
+                finish()
+            },
+            failure = { t ->
                 Hub.log("⚠ 扫码登录确认失败：${t.message}")
-                runOnUiThread {
-                    toast("确认失败：${t.message}")
-                    finish()
-                }
+                toast("确认失败：${t.message}")
+                finish()
             }
-        }.start()
+        )
     }
 
     private fun deny(client: AuthClient, ticket: QrTicket.Ticket) {
-        Thread {
-            try {
-                client.deny(ticket)
-            } catch (_: Throwable) {
-                // 拒绝属于尽力而为：即便网络失败，不给出授权码同样等于拒绝
-            }
-            Hub.log("已拒绝一次扫码登录请求")
-            runOnUiThread {
-                toast("已拒绝该登录请求")
-                finish()
-            }
-        }.start()
+        request(
+            work = { client.deny(ticket) },
+            success = { denied() },
+            // 拒绝属于尽力而为：网络失败也不授权，但页面销毁后的结果不再回调。
+            failure = { denied() }
+        )
+    }
+
+    private fun denied() {
+        Hub.log("已拒绝一次扫码登录请求")
+        toast("已拒绝该登录请求")
+        finish()
     }
 
     private fun toast(s: String) =

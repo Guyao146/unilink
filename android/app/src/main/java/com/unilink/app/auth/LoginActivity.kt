@@ -1,6 +1,5 @@
 package com.unilink.app.auth
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -25,10 +24,11 @@ import com.unilink.app.Hub
  * PKCE verifier 保存在内存静态字段而非 Intent 里 —— 避免被其它应用
  * 通过 recent tasks 或 Intent 嗅探读到。进程被杀则登录流程作废（用户重试即可）。
  */
-class LoginActivity : Activity() {
+class LoginActivity : AuthTaskActivity() {
 
     /** 已经把用户送去浏览器了吗？用于识别"用户按返回键放弃登录"的情况 */
     private var browserLaunched = false
+    private var handlingCallback = false
 
     companion object {
         private const val EXTRA_SERVER = "qr_server"
@@ -51,8 +51,16 @@ class LoginActivity : Activity() {
         if (data != null && data.scheme == "unilink") {
             handleCallback(data)
         } else {
-            beginAuthorize(intent?.getStringExtra(EXTRA_SERVER).orEmpty())
+            browserLaunched = savedInstanceState?.getBoolean("browser_launched") ?: false
+            if (!browserLaunched) {
+                beginAuthorize(intent?.getStringExtra(EXTRA_SERVER).orEmpty())
+            }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("browser_launched", browserLaunched)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -75,23 +83,24 @@ class LoginActivity : Activity() {
         }
         AuthSession.setQrServer(this, qrServer)
 
-        Thread {
-            val client = AuthClient(this)
-            try {
+        request(
+            work = {
                 val ep = client.fetchEndpoints(qrServer)
                 val pkce = AuthSession.newPkce()
+                Triple(ep, pkce, client.buildAuthorizeUrl(ep, pkce))
+            },
+            success = { (ep, pkce, url) ->
+                // 只在仍存活的页面发布 PKCE，旧请求不能覆盖新登录的状态。
                 pending = pkce
                 pendingEp = ep
-                val url = client.buildAuthorizeUrl(ep, pkce)
-                runOnUiThread { openBrowser(url) }
-            } catch (t: Throwable) {
+                openBrowser(url)
+            },
+            failure = { t ->
                 Hub.log("⚠ 无法获取登录配置：${t.message}")
-                runOnUiThread {
-                    toast("无法连接扫码登录服务：${t.message}")
-                    finish()
-                }
+                toast("无法连接扫码登录服务：${t.message}")
+                finish()
             }
-        }.start()
+        )
     }
 
     private fun openBrowser(url: String) {
@@ -130,6 +139,8 @@ class LoginActivity : Activity() {
     // ---------------- 第 2 步：处理回跳 ----------------
 
     private fun handleCallback(data: Uri) {
+        if (isFinishing || isDestroyed || handlingCallback) return
+        handlingCallback = true
         val pkce = pending
         val ep = pendingEp
         pending = null
@@ -159,24 +170,21 @@ class LoginActivity : Activity() {
             return
         }
 
-        Thread {
-            try {
-                val info = AuthClient(this).exchangeCode(ep, code, pkce.verifier)
+        request(
+            work = { client.exchangeCode(ep, code, pkce.verifier) },
+            success = { info ->
                 val name = info.optString("preferred_username")
                     .ifBlank { info.optString("email") }
                 Hub.log("🔑 已登录 authentik：$name")
-                runOnUiThread {
-                    toast("登录成功：$name")
-                    finish()
-                }
-            } catch (t: Throwable) {
+                toast("登录成功：$name")
+                finish()
+            },
+            failure = { t ->
                 Hub.log("⚠ 换取令牌失败：${t.message}")
-                runOnUiThread {
-                    toast("登录失败：${t.message}")
-                    finish()
-                }
+                toast("登录失败：${t.message}")
+                finish()
             }
-        }.start()
+        )
     }
 
     private fun toast(s: String) =
